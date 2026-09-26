@@ -1,0 +1,167 @@
+/* ============================================================
+   How-to-Vote HOLDING PAGE ("Not ready yet" mode)
+   Owner: src/components/HtvComingSoon.astro (+ /assets/js/htv-coming-soon.js)
+
+   Built entirely from the design-system tokens in global.css — sand, ink,
+   Democrat Yellow, teal, teal-deep — and the site's existing signature
+   treatments: the framed panel with a yellow offset shadow, and the
+   yellow-fill / ink-text / ink-border / offset-ink-shadow "owner box".
+   No new colours, no new type, nothing imported.
+
+   MOTION CONTRACT
+   The rules below the divider are the FINISHED, STILL scene: a pot with a
+   simmering surface, steam, and five jumbled preference boxes. Everything
+   that moves is gated on `html.js-motion`, which effects.js adds only when
+   JS is running AND prefers-reduced-motion is not set. So JS-off and
+   reduced-motion visitors get this file's base state — complete and
+   readable, nothing hidden, nothing waiting on an animation to appear.
+   Only `transform` and `opacity` are animated (compositor-only, no layout).
+   ============================================================ */
+
+.hcs { padding-block: clamp(2rem, 6vw, 3.5rem) clamp(2.5rem, 7vw, 4.5rem); }
+
+.hcs-hero { display: grid; gap: clamp(1.5rem, 4vw, 2.75rem); align-items: center; }
+@media (min-width: 880px) {
+  .hcs-hero { grid-template-columns: minmax(0, 1fr) clamp(300px, 40vw, 430px); }
+}
+
+.hcs-copy { max-width: 34rem; }
+.hcs-copy h1 { font-size: var(--step-4); line-height: 1.03; max-width: 15ch; }
+.hcs-copy .lede { color: var(--ink-soft); margin-top: 1rem; font-size: var(--step-1); max-width: 38ch; }
+.hcs-actions { margin-top: clamp(1.5rem, 4vw, 2.25rem); }
+
+/* ---------- The stage: the site's framed panel, yellow offset shadow ------ */
+.hcs-scene { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; }
+.hcs-stage {
+  position: relative; width: 100%; max-width: 430px;
+  background: var(--paper); border: 2.5px solid var(--ink); border-radius: 14px;
+  box-shadow: 8px 8px 0 var(--yellow); overflow: hidden;
+}
+/* The whole panel becomes a bonus tap target once JS is running (the real,
+   keyboard-reachable control is the button below it). */
+.hcs-stage.hcs-on { cursor: pointer; }
+@media (max-width: 640px) { .hcs-stage { box-shadow: 6px 6px 0 var(--yellow); } }
+.hcs-svg { display: block; width: 100%; height: auto; }
+.hcs-stir { margin-top: 0.15rem; }
+
+/* ---------- Scene parts (static state) ----------------------------------- */
+/* Three neutrals, lightest to deepest, so the pot reads clear of the bench
+   it stands on: panel = paper, pot + hotplate = sand, bench top = line. */
+.hcs-bench { fill: var(--line); }
+.hcs-glow { fill: var(--yellow-soft); }
+.hcs-benchline { fill: none; stroke: var(--ink); stroke-width: 3; }
+.hcs-burner { fill: var(--sand); stroke: var(--ink); stroke-width: 3; }
+
+.hcs-body { fill: var(--sand); stroke: var(--ink); stroke-width: 4; stroke-linejoin: round; }
+.hcs-handle { fill: none; stroke: var(--ink); stroke-width: 6; stroke-linecap: round; }
+.hcs-rim { fill: var(--yellow); stroke: var(--ink); stroke-width: 4; }
+.hcs-stew { fill: var(--teal-deep); }
+.hcs-stew-hi { fill: var(--teal); opacity: 0.55; }
+.hcs-b { fill: var(--paper); stroke: var(--teal); stroke-width: 2; opacity: 0.9; }
+.hcs-spoon { fill: none; stroke: var(--ink); stroke-width: 7; stroke-linecap: round; }
+.hcs-spoon-bowl { fill: var(--sand); stroke: var(--ink); stroke-width: 3; }
+.hcs-w { fill: none; stroke: var(--teal); stroke-width: 5.5; stroke-linecap: round; opacity: 0.5; }
+
+.hcs-tile { fill: var(--paper); stroke: var(--ink); stroke-width: 3; }
+.hcs-tile--own { fill: var(--yellow); }        /* the party's owner box */
+.hcs-tile-sh { fill: var(--ink); }             /* the signature offset shadow */
+.hcs-num {
+  font-family: var(--font-display); font-weight: 800; font-size: 19px;
+  fill: var(--ink); text-anchor: middle; dominant-baseline: central;
+}
+
+/* ---------- The jumble ---------------------------------------------------
+   BASE = jumbled: the five numbers are scattered above the pot, because the
+   order isn't settled yet. That is the honest resting state, and it is what
+   a no-JS or reduced-motion visitor sees. `.is-settled` removes the offsets
+   and every box glides into its own slot — 1, 2, 3, 4, 5.
+   The transform-origin is each box's own centre so the tilt reads as a tilt,
+   not a swing. */
+.hcs-tj {
+  transform-box: fill-box; transform-origin: center;
+  transition: transform 720ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hcs-tj1 { transform: translate(96px, 48px) rotate(-14deg); transition-delay: 0ms; }
+.hcs-tj2 { transform: translate(-52px, -22px) rotate(11deg); transition-delay: 55ms; }
+.hcs-tj3 { transform: translate(76px, -20px) rotate(-8deg); transition-delay: 110ms; }
+.hcs-tj4 { transform: translate(-108px, 40px) rotate(16deg); transition-delay: 165ms; }
+.hcs-tj5 { transform: translate(-72px, -26px) rotate(-12deg); transition-delay: 220ms; }
+.hcs-stage.is-settled .hcs-tj { transform: none; }
+
+/* ============================================================
+   MOTION — html.js-motion only (JS running AND motion allowed).
+   ============================================================ */
+
+/* Idle bob: the boxes hang in the steam. */
+.js-motion .hcs-tb { animation: hcs-bob 4.4s ease-in-out infinite; }
+.js-motion .hcs-tb2 { animation-delay: -0.8s; }
+.js-motion .hcs-tb3 { animation-delay: -1.7s; }
+.js-motion .hcs-tb4 { animation-delay: -2.5s; }
+.js-motion .hcs-tb5 { animation-delay: -3.3s; }
+@keyframes hcs-bob {
+  0%, 100% { transform: translateY(-3px); }
+  50% { transform: translateY(3px); }
+}
+
+/* A gentle simmer: bubbles swell and pop at the surface. Five circles, one
+   transform + opacity each — the whole loop is compositor work. */
+.js-motion .hcs-b { transform-box: fill-box; transform-origin: center; animation: hcs-bub 2.8s ease-in-out infinite; }
+.js-motion .hcs-b2 { animation-delay: -0.5s; }
+.js-motion .hcs-b3 { animation-delay: -1.1s; }
+.js-motion .hcs-b4 { animation-delay: -1.8s; }
+.js-motion .hcs-b5 { animation-delay: -2.3s; }
+@keyframes hcs-bub {
+  0% { transform: scale(0.2); opacity: 0; }
+  35% { opacity: 0.95; }
+  70% { transform: scale(1.15); opacity: 0.6; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
+/* The stew surface rocks; steam rises and thins out. */
+.js-motion .hcs-stew-hi { transform-box: fill-box; transform-origin: center; animation: hcs-rock 5.2s ease-in-out infinite; }
+@keyframes hcs-rock {
+  0%, 100% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+}
+
+.js-motion .hcs-w { transform-box: fill-box; transform-origin: bottom center; animation: hcs-steam 3.8s ease-in-out infinite; }
+.js-motion .hcs-w2 { animation-delay: -1.3s; }
+.js-motion .hcs-w3 { animation-delay: -2.4s; }
+@keyframes hcs-steam {
+  0% { opacity: 0; transform: translateY(10px) scaleY(0.75); }
+  30% { opacity: 0.5; }
+  100% { opacity: 0; transform: translateY(-26px) scaleY(1.15); }
+}
+
+/* ---------- The stir ------------------------------------------------------
+   One press: the spoon sweeps, the pot rocks on its base, the simmer speeds
+   up, and (via .is-settled, above) the numbers fall into order. The pivot
+   points are viewBox coordinates — the pot turns on the stove top, the spoon
+   turns in the middle of the pot. */
+.hcs-pot { transform-box: view-box; transform-origin: 200px 292px; }
+.hcs-spoon-g { transform-box: view-box; transform-origin: 200px 200px; }
+
+.js-motion .hcs-stage.is-stirring .hcs-pot { animation: hcs-wobble 1.1s ease-in-out; }
+.js-motion .hcs-stage.is-stirring .hcs-spoon-g { animation: hcs-stir 1.1s ease-in-out; }
+.js-motion .hcs-stage.is-stirring .hcs-b { animation-duration: 1.1s; }
+
+@keyframes hcs-wobble {
+  0%, 100% { transform: rotate(0deg); }
+  22% { transform: rotate(-1.7deg); }
+  48% { transform: rotate(1.7deg); }
+  74% { transform: rotate(-1deg); }
+}
+@keyframes hcs-stir {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-23deg); }
+  56% { transform: rotate(20deg); }
+  80% { transform: rotate(-9deg); }
+}
+
+/* Belt and braces. global.css already neutralises every animation under
+   prefers-reduced-motion, and js-motion is never added there — but a scene
+   this animated states it for itself rather than inheriting it. */
+@media (prefers-reduced-motion: reduce) {
+  .hcs-tb, .hcs-b, .hcs-stew-hi, .hcs-w, .hcs-pot, .hcs-spoon-g { animation: none !important; }
+  .hcs-tj { transition: none !important; }
+}
