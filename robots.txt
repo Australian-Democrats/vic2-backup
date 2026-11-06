@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /keystatic
+Disallow: /api/
+Disallow: /thanks
+Disallow: /cancelled
+Disallow: /admin
+
+Sitemap: https://vic.democrats.org.au/sitemap-index.xml
