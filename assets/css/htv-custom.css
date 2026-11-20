@@ -1,0 +1,349 @@
+/* ============================================================
+   CUSTOM HOW-TO-VOTE CARDS + FAMILY MODE (.htvx-*, .htvfam-*)
+   Owners: src/components/htv/HtvCustomPage.astro (+ src/scripts/
+   htv-custom-page.ts) and HtvFamilyPage.astro (+ /assets/js/htv-family.js).
+   Linked through Base's head slot ONLY by those pages, beside
+   htv-finder.css and htv-ballot.css, whose tokens, papers and print rules it
+   builds on — no other page carries a byte of it (ADR-97, stage 2).
+
+   Built from the site's canon only: paper / sand panels, ink borders and the
+   yellow offset shadow, .eyebrow labels, Bricolage numbers. The voter's own
+   numbers are INK in the box (our locked 1 stays teal-deep on its yellow
+   row/column, with a small lock) — the party's 1 and the voter's numbers can
+   always be told apart.
+
+   CONTRAST (WCAG 2.2 AA, every text pair added here, measured): ink #1c2b29
+   on white 14.7:1, on paper 14.5:1, on sand 12.9:1, on yellow-soft 12.3:1,
+   on yellow 10.5:1, on the numbered row's #f7fbfa 14.1:1; ink-soft #46514f on
+   white 8.2:1, on paper 8.1:1, on sand 7.2:1; paper on teal-ink #0d4a43
+   9.9:1, on ink 14.5:1; teal-deep #147065 on white 5.9:1, on paper 5.8:1, on
+   sand 5.2:1; the error #7c2517 on #fbe9e5 8.4:1 (the site's form-error pair).
+   ============================================================ */
+
+/* ----------------------------------------------------------- page shell */
+/* The builder's own bar follows the visitor down the papers; the site's
+   Join/Donate follow-bar would sit on top of it — not on these pages. */
+html:has(#htvCustom) .follow-bar { display: none !important; }
+
+.htvx-wrap > * { min-width: 0; }
+.htvx-head { padding-bottom: 0.5rem; }
+.htvx-h:focus { outline: none; }
+.htvx-h:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; border-radius: 4px; }
+.htvx[data-mode='build'] .htvx-when-view,
+.htvx[data-mode='view'] .htvx-when-build { display: none !important; }
+/* The card view's one line that differs: a card opened from a link someone
+   shared, or the visitor's own, just finished (data-origin, set by the script). */
+.htvx:not([data-origin='own']) .htvx-when-own,
+.htvx[data-origin='own'] .htvx-when-link { display: none !important; }
+/* Keyboard focus never lands under the builder bar (WCAG 2.2 SC 2.4.11): while
+   building, the document scroll-pads by the bar's measured height
+   (--htvx-bar-h, published by the script; the fallback is its tallest, phone
+   layout), so a Tab to a box near the foot of the screen scrolls it clear. */
+html:has(#htvCustom.is-ready[data-mode='build']) { scroll-padding-bottom: calc(var(--htvx-bar-h, 8.5rem) + 0.75rem); }
+.htvb-set--lc[data-way='atl'] .htvx-when-btl,
+.htvb-set--lc[data-way='btl'] .htvx-when-atl { display: none !important; }
+
+/* Banners: the preview-only sample, and "names not yet checked". */
+.htvx-banner {
+  margin-top: 1rem; padding: 0.85rem 1.1rem; border-radius: 12px;
+  border: 2px solid var(--ink); background: var(--yellow-soft); color: var(--ink);
+  font-size: 0.98rem; line-height: 1.45;
+}
+.htvx-banner p { max-width: none; }
+.htvx-banner--warn { background: #fff; border-left-width: 8px; }
+.htvx-alert {
+  margin-top: 1rem; padding: 0.85rem 1.1rem; border-radius: 12px;
+  background: #fbe9e5; color: #7c2517; border: 1.5px solid #e5b1a5;
+  font-weight: 650; max-width: none;
+}
+
+/* The disclosure — the owner's words, on screen in both modes. */
+.htvx-disclosure {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.8rem; align-items: start;
+  margin-top: 1.1rem; padding: 1rem 1.15rem; border-radius: 14px;
+  background: #fff; color: var(--ink); border: 2px solid var(--ink); box-shadow: 5px 5px 0 var(--yellow);
+}
+.htvx-disclosure-ico { color: var(--teal-deep); margin-top: 0.1rem; }
+.htvx-disclosure p { max-width: none; }
+.htvx-disclosure-line { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.05rem, 0.98rem + 0.4vw, 1.25rem); line-height: 1.25; }
+.htvx-disclosure-sub { margin-top: 0.3rem; font-size: 0.95rem; line-height: 1.45; color: var(--ink-soft); }
+.htvx-noscript { margin-top: 1rem; font-weight: 650; }
+
+/* Build: three short steps. */
+.htvx-steps { list-style: none; margin: 1.1rem 0 0; padding: 0; display: grid; gap: 0.55rem; }
+@media (min-width: 900px) { .htvx-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; } }
+.htvx-steps li { display: flex; align-items: baseline; gap: 0.6rem; font-size: 0.98rem; line-height: 1.4; max-width: none; }
+.htvx-step-n {
+  flex: none; padding: 0.15rem 0.55rem; border-radius: 999px; background: var(--ink); color: var(--paper);
+  font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+}
+
+/* View: what to do with the card. */
+.htvx-viewbar {
+  display: grid; gap: 0.9rem; margin-top: 1.1rem; padding: clamp(1rem, 2.4vw, 1.4rem);
+  background: var(--sand); border: 2px solid var(--ink); border-radius: 16px;
+}
+.htvx-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+.htvx-act { min-height: 48px; }
+.htvx-actions--alt { padding-top: 0.2rem; border-top: 1.5px solid #d8cfb5; padding-top: 0.9rem; }
+.htvx-busy:empty, .htvx-share-status:empty { display: none; }
+.htvx-busy { font-weight: 650; }
+.htvx-share-h { font-weight: 800; font-size: 0.95rem; max-width: none; }
+.htvx-share-links { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.45rem; }
+.htvx-chip {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0.45rem 1rem; border-radius: 999px;
+  background: #fff; color: var(--ink); border: 2px solid var(--ink);
+  font: 700 0.92rem/1.1 var(--font-body); text-decoration: none; cursor: pointer;
+}
+.htvx-chip:hover { background: var(--yellow-soft); color: var(--ink); }
+.htvx-chip:focus-visible, .htvx-act:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.htvx-share-note { margin-top: 0.5rem; font-size: 0.88rem; color: var(--ink-soft); max-width: none; }
+.htvx-share-status { margin-top: 0.4rem; font-weight: 650; max-width: none; overflow-wrap: anywhere; }
+
+/* ------------------------------------------------------------ the papers */
+.htvx-set { scroll-margin-top: 6rem; }
+.htvx-ask { font-weight: 700; }
+.htvx-progress {
+  display: inline-block; margin-top: 0.7rem; padding: 0.35rem 0.8rem; border-radius: 12px;
+  background: var(--yellow-soft); color: var(--ink); border: 1.5px solid var(--ink);
+  font-size: 0.92rem; font-weight: 750; max-width: none !important;
+}
+.htvx-progress.is-ok { background: var(--teal-ink); color: var(--paper); border-color: var(--teal-ink); }
+.htvx-way { display: grid; gap: 0.35rem; justify-items: start; }
+.htvx-way-note { font-size: 0.86rem; color: var(--ink-soft); max-width: 30ch !important; }
+.htvb-key--num { color: var(--ink); }
+
+/* The boxes: buttons the visitor numbers. Our locked 1 keeps its yellow row
+   or column and gets a small lock; the voter's numbers are ink. */
+.htvx button.htvb-box { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.htvx button.htvb-box:disabled { cursor: default; color: var(--ink); opacity: 1; }
+.htvx button.htvb-box:focus-visible { outline: 3px solid var(--focus) !important; outline-offset: 2px; }
+.htvx[data-mode='build'] button.htvb-box:not(:disabled):hover { background: var(--yellow-soft); }
+.htvx .htvb-box.is-num { color: var(--ink); outline: 0; background: #fff; }
+.htvx[data-mode='build'] .htvb-row:has(button.htvb-box:not(:disabled)),
+.htvx[data-mode='build'] .htvb-btl-cand:has(button.htvb-box:not(:disabled)),
+.htvx[data-mode='build'] .htvb-atl:has(button.htvb-box:not(:disabled)) { cursor: pointer; }
+.htvx[data-mode='build'] .htvb-row:has(button.htvb-box.is-num) { background: #f7fbfa; }
+.htvx[data-mode='view'] .htvb-box.is-yours:not(.is-num) { outline: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .htvx .htvb-box.is-num { animation: htvx-pop 0.18s ease-out; }
+}
+@keyframes htvx-pop { 0% { transform: scale(0.86); } 100% { transform: none; } }
+.htvb-box.is-locked { position: relative; }
+.htvb-lockw {
+  position: absolute; top: -0.55rem; right: -0.55rem; display: grid; place-items: center;
+  width: 1.15rem; height: 1.15rem; border-radius: 50%; background: var(--ink); color: var(--yellow);
+}
+.htvb-lockw .htvb-lock { width: 0.68rem; height: 0.68rem; }
+
+/* Without the script the boxes stay disabled; say why, not "broken". */
+.htvx:not(.is-ready) button.htvb-box { cursor: not-allowed; }
+
+/* ------------------------------------------------------- the builder bar */
+.htvx-bar {
+  position: sticky; bottom: 0; z-index: 30; margin-top: clamp(1.5rem, 4vw, 2.5rem);
+  margin-inline: calc(-1 * min(var(--gutter), 1rem));
+}
+.htvx-bar-in {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.5rem 1rem;
+  padding: 0.7rem clamp(0.8rem, 2vw, 1.2rem) calc(0.7rem + env(safe-area-inset-bottom, 0px));
+  background: var(--paper); border: 2px solid var(--ink); border-bottom: 0; border-radius: 16px 16px 0 0;
+  box-shadow: 0 -8px 24px rgb(28 43 41 / 14%);
+}
+.htvx-bar-status { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem 0.6rem; }
+.htvx-bar-status li {
+  display: inline-flex; align-items: baseline; gap: 0.35rem; padding: 0.3rem 0.7rem; border-radius: 999px;
+  background: var(--yellow-soft); border: 1.5px solid var(--ink); font-size: 0.9rem; line-height: 1.2;
+}
+.htvx-bar-status li.is-ok { background: var(--teal-ink); border-color: var(--teal-ink); color: var(--paper); }
+.htvx-bar-k { font-weight: 800; }
+.htvx-bar-v { font-weight: 650; }
+.htvx-bar-btns { display: flex; flex-wrap: wrap; gap: 0.45rem; justify-content: flex-end; }
+.htvx-bar-btns .btn { min-height: 44px; }
+.htvx-bar-btns .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+#htvxFinish[aria-disabled='true'] { background: #fff; box-shadow: none; border-style: dashed; color: var(--ink); }
+.htvx-bar-note { grid-column: 1 / -1; font-size: 0.85rem; color: var(--ink-soft); max-width: none; }
+.htvx.is-complete .htvx-bar-note { display: none; }
+@media (max-width: 699px) {
+  .htvx-bar-in { grid-template-columns: minmax(0, 1fr); }
+  .htvx-bar-btns { display: grid; grid-template-columns: 1fr 1fr 1.4fr; justify-content: stretch; }
+  .htvx-bar-btns .btn { padding-inline: 0.5rem; }
+  .htvx-bar-note { display: none; }
+}
+@media (max-width: 379px) {
+  /* One row of buttons even at 320px: the bar takes as little of a small
+     screen as it can. */
+  .htvx-bar-in { gap: 0.4rem; padding-top: 0.5rem; }
+  .htvx-bar-status li { font-size: 0.82rem; padding: 0.2rem 0.55rem; }
+  .htvx-bar-btns { grid-template-columns: auto auto minmax(0, 1fr); gap: 0.35rem; }
+  .htvx-bar-btns .btn { font-size: 0.84rem; padding-inline: 0.55rem; }
+}
+
+/* Below the papers. */
+.htvx-more-grid { display: grid; gap: 1.25rem 2.5rem; }
+@media (min-width: 860px) { .htvx-more-grid { grid-template-columns: 1fr 1fr; } }
+.htvx-more a { color: var(--teal-deep); font-weight: 700; }
+
+/* The PDF: the Council paper laid out whole — and compact, as the printed
+   sheet is (names under their boxes; each column headed by its letter alone)
+   — while it is drawn into an image, so it reads across a landscape A4 page. */
+.htvx.is-exporting .htvb-scroll { overflow: visible !important; }
+.htvx.is-exporting .htvb-paper--lc { width: min-content; min-width: 0; max-width: none; }
+.htvx.is-exporting .htvb-set--lc { --htvb-col: 6.25rem; --htvb-box: 2.3rem; }
+.htvx.is-exporting .htvb-set--lc .htvb-box { font-size: 1.35rem; }
+.htvx.is-exporting .htvb-btl-cand { grid-template-columns: minmax(min-content, 1fr); justify-items: start; gap: 0.15rem; margin-bottom: 0.35rem; min-height: 0; }
+.htvx.is-exporting .htvb-paper--lc[data-drawn='true'] .htvb-btl-hn { display: none; }
+.htvx.is-exporting .htvb-btl-nm { font-size: 0.74rem; overflow-wrap: normal; }
+.htvx.is-exporting .htvb-btl-nm b { letter-spacing: 0; }
+.htvx.is-exporting .htvb-gname { font-size: 0.68rem; }
+.htvx.is-exporting .htvb-line > span { position: static; }
+.htvx.is-exporting .htvb-coach, .htvx.is-exporting .htvb-lockw { display: none !important; }
+
+/* ============================================================ FAMILY MODE */
+/* The builder is drawn from the first paint (htv-finder.css leaves .htvfam
+   out of its "until the script is ready" rule), so nothing moves when the
+   script arrives; with scripting off it is not there at all — the district
+   list below is the page. */
+@media (scripting: none) {
+  .htvfam .htvf-js-only { display: none !important; }
+}
+.htvfam-lede { margin-top: 0.75rem; font-size: 1.05rem; max-width: 60ch; }
+.htvfam-privacy {
+  display: flex; gap: 0.6rem; align-items: flex-start; margin-top: 1rem; padding: 0.75rem 1rem; max-width: 46rem;
+  background: #fff; border: 1.5px solid var(--ink); border-radius: 12px; font-size: 0.95rem; line-height: 1.45;
+}
+.htvfam-privacy svg { flex: none; color: var(--teal-deep); margin-top: 0.1rem; }
+.htvfam-builder {
+  margin-top: 1.5rem; padding: clamp(1rem, 3vw, 1.75rem);
+  background: var(--sand); border: 2px solid var(--ink); border-radius: 18px; box-shadow: 7px 7px 0 var(--yellow);
+}
+.htvfam-chips-l { font-weight: 800; font-size: 0.9rem; max-width: none; }
+.htvfam-chips { list-style: none; margin: 0.45rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.htvfam-chip {
+  min-height: 44px; padding: 0.45rem 1rem; border-radius: 999px; cursor: pointer;
+  background: #fff; color: var(--ink); border: 2px solid var(--ink); font: 700 0.95rem/1.1 var(--font-body);
+}
+.htvfam-chip:hover:not(:disabled), .htvfam-chip[aria-pressed='true'] { background: var(--yellow); }
+.htvfam-chip:disabled { cursor: default; color: var(--ink-soft); border-style: dashed; background: transparent; }
+.htvfam-chip:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.htvfam-form { display: grid; gap: 0.9rem; margin-top: 1.1rem; }
+@media (min-width: 760px) { .htvfam-form { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr) auto; align-items: end; } }
+.htvfam-field { display: grid; gap: 0.3rem; min-width: 0; }
+.htvfam-field label { font-weight: 800; font-size: 0.95rem; }
+.htvfam-hint { font-size: 0.86rem; color: var(--ink-soft); max-width: none; }
+.htvfam-input {
+  width: 100%; min-height: 48px; padding: 0.6rem 0.85rem; border-radius: 10px;
+  border: 2px solid var(--ink); background: #fff; color: var(--ink); font: 500 1rem/1.3 var(--font-body);
+}
+.htvfam-input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.htvfam-combo { position: relative; }
+.htvfam-opts {
+  position: absolute; z-index: 25; top: calc(100% + 4px); left: 0; right: 0; margin: 0; padding: 0.3rem; list-style: none;
+  max-height: 18rem; overflow: auto; background: #fff; border: 2px solid var(--ink); border-radius: 10px;
+  box-shadow: 0 12px 28px rgb(28 43 41 / 18%);
+}
+.htvfam-opt { display: grid; gap: 0.1rem; padding: 0.55rem 0.7rem; border-radius: 7px; cursor: pointer; }
+.htvfam-opt[aria-selected='true'], .htvfam-opt:hover { background: var(--yellow-soft); }
+.htvfam-opt-name { font-weight: 750; }
+.htvfam-opt-meta { font-size: 0.85rem; color: var(--ink-soft); }
+.htvfam-add { min-height: 48px; }
+.htvfam-status { margin-top: 0.6rem; font-weight: 650; max-width: none; }
+.htvfam-status:empty { display: none; }
+.htvfam-status a { color: var(--teal-deep); }
+
+.htvfam-list-h { margin-top: 1.75rem; font-size: clamp(1.3rem, 1.1rem + 0.8vw, 1.7rem); }
+.htvfam-empty { margin-top: 0.6rem; color: var(--ink-soft); }
+.htvfam-list { list-style: none; margin: 0.8rem 0 0; padding: 0; display: grid; gap: 0.8rem; }
+@media (min-width: 900px) { .htvfam-list { grid-template-columns: 1fr 1fr; } }
+.htvfam-person {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.4rem 0.85rem; align-items: start;
+  padding: 1rem 1.1rem; background: #fff; border: 2px solid var(--ink); border-radius: 14px; box-shadow: 4px 4px 0 var(--yellow);
+}
+.htvfam-avatar {
+  display: grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: 50%;
+  background: var(--yellow); border: 2px solid var(--ink); font: 800 1.15rem/1 var(--font-display);
+}
+.htvfam-who { min-width: 0; }
+.htvfam-name { font: 800 1.15rem/1.2 var(--font-display); overflow-wrap: anywhere; max-width: none; }
+.htvfam-place { margin-top: 0.15rem; font-weight: 650; max-width: none; }
+.htvfam-place a { color: var(--teal-deep); }
+.htvfam-papers { list-style: none; margin: 0.35rem 0 0; padding: 0; font-size: 0.9rem; color: var(--ink-soft); display: grid; gap: 0.15rem; }
+.htvfam-acts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.35rem; }
+.htvfam-acts .htvx-chip { font-size: 0.86rem; padding-inline: 0.8rem; }
+.htvfam-remove { margin-left: auto; }
+.htvfam-all { display: grid; gap: 0.9rem; margin-top: 1.25rem; }
+.htvfam-all-btns { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.htvfam-send { padding: 1rem 1.1rem; background: #fff; border: 2px solid var(--ink); border-radius: 14px; }
+.htvfam-send[hidden] { display: none; }
+.htvfam-send-note { font-size: 0.88rem; color: var(--ink-soft); max-width: none; }
+.htvfam-pack { display: none; }
+
+/* ================================================================= print */
+@media print {
+  /* Custom card: every sheet carries its own disclosure, "own use" and
+     authorisation lines — the footer's copy steps aside. */
+  html:has(#htvCustom) body #site-footer,
+  html:has(#htvFamily) body #site-footer { display: none !important; }
+  .htvx .htvx-head, .htvx-banner, .htvx-alert, .htvx-disclosure, .htvx-steps, .htvx-viewbar, .htvx-bar,
+  .htvx-progress, .htvx-way, .htvx-noscript, .htvx-more { display: none !important; }
+  /* ONLY A FINISHED CARD PRINTS. While building — or whenever a paper is not
+     yet filled in as it asks (no .is-complete: the script's own verdict, and
+     never set without the script) — the browser's own Print gives one sheet
+     saying so, with the "own use" and authorisation lines, and no paper: an
+     unfinished card would be an informal vote. */
+  .htvx:is([data-mode='build'], :not(.is-complete)) .htvx-set { display: none !important; }
+  .htvx[data-mode='view'].is-complete .htvx-print-wait { display: none !important; }
+  .htvx-print-wait .htvx-sheet-mast {
+    display: flex !important; align-items: center; justify-content: space-between; gap: 4mm;
+    padding-bottom: 2mm; margin-bottom: 4mm; border-bottom: 1.2pt solid var(--ink); font-size: 9pt;
+  }
+  .htvx-print-wait-h { font-family: var(--font-display); font-weight: 800; font-size: 18pt; line-height: 1.2; max-width: none; }
+  .htvx-print-wait-p { margin-top: 2mm; font-size: 11pt; max-width: none; }
+  .htvx-print-wait .htvf-sheet-legal { display: block !important; margin-top: 8mm; break-inside: avoid; }
+  .htvx-set { break-before: page; }
+  .htvx-set:first-of-type { break-before: auto; }
+  .htvx-sheet-mast.htvf-print-only {
+    display: flex !important; align-items: center; justify-content: space-between; gap: 4mm;
+    padding-bottom: 2mm; margin-bottom: 2mm; border-bottom: 1.2pt solid var(--ink); font-size: 9pt;
+  }
+  .htvx-sheet-mast img { height: 8mm; width: auto; }
+  .htvx-sheet-mast p, .htvx-sheet-flags p { max-width: none; }
+  .htvx-sheet-flags { margin-bottom: 2.5mm; font-size: 9pt; }
+  .htvx-sheet-disc { font-size: 10.5pt; }
+  .htvx .htvb-box.is-yours { outline: 0 !important; }
+  .htvx .htvb-box.is-num { color: #000; }
+  .htvx .htvb-lockw { display: none; }
+  .htvx-legal p { max-width: none; }
+  .htvx-legal-disc { font-size: 8pt; font-weight: 700; }
+  .htvx-legal-close { font-size: 7.5pt; margin-top: 0.8mm; }
+  .htvx-set .htvb-eyebrow { display: none; }
+  .htvx-set--lc .htvb-h, .htvx-set.htvb-set--lc .htvb-h { font-size: 12pt; margin-top: 0; }
+  .htvx-set.htvb-set--lc .htvb-head--lc { gap: 1mm; }
+  .htvx-set.htvb-set--lc .htvb-figure--lc { margin-top: 1.5mm; }
+  .htvx-set.htvb-set--lc .htvb-paper-head { margin-bottom: 1.5mm; }
+  .htvx-set.htvb-set--lc .htvb-dir { margin-bottom: 2mm; }
+  .htvx-set.htvb-set--lc .htvb-paper { padding: 2.5mm 3mm; }
+  /* The landscape sheet is tight: the paper's own header names it, the mast
+     says what it is, and the legal lines say who chose the numbers. */
+  .htvx-set.htvb-set--lc .htvb-head--lc, .htvx-set.htvb-set--lc .htvb-foot { display: none !important; }
+  .htvx-set.htvb-set--lc .htvx-sheet-flags { margin-bottom: 1.5mm; }
+
+  /* Family pack: only the cover and the cards it needs. */
+  .htvfam .htvf-result-head, .htvfam-builder, .htvfam-privacy, .htvfam-lede, .htvfam-list-h, .htvfam-list,
+  .htvfam-empty, .htvfam-all { display: none !important; }
+  .htvfam-pack { display: block !important; }
+  .htvfam-sheet { display: none !important; }
+  .htvfam-sheet.is-included { display: block !important; break-before: page; }
+  .htvfam-sheet .htvf-sheet-legal, .htvfam-cover .htvf-sheet-legal { display: block !important; margin-top: 2.5mm; break-inside: avoid; }
+  .htvfam-for { display: block !important; margin-bottom: 2mm; font-size: 10pt; font-weight: 800; max-width: none; }
+  .htvfam-cover .htvf-print-mast { display: flex !important; }
+  .htvfam-cover-h { font-size: 22pt; margin-top: 2mm; }
+  .htvfam-cover-sub { font-size: 10pt; margin-top: 1mm; max-width: none; }
+  .htvfam-cover-list { margin: 4mm 0 0; padding: 0; list-style: none; display: grid; gap: 2.5mm; }
+  .htvfam-cover-list li { padding: 2.5mm 3.5mm; border: 1pt solid var(--ink); border-radius: 2.5mm; font-size: 10pt; break-inside: avoid; }
+  .htvfam-cover-list b { font-size: 12pt; }
+  .htvfam-cover-list span { display: block; margin-top: 0.6mm; }
+  .htvfam-remember { margin-top: 5mm; padding: 3mm 4mm; border: 1pt solid var(--ink); border-radius: 2.5mm; }
+  .htvfam-remember h2 { font-size: 12pt; }
+  .htvfam-remember li { font-size: 9pt; margin-top: 1mm; }
+}

@@ -1,0 +1,527 @@
+/* ============================================================
+   The header over a photograph — ONE source for every page that uses it
+   ============================================================
+   Linked by src/layouts/Base.astro ONLY on a page rendered with
+   chrome="overlay" (the campaign homepage, and an interior page whose
+   Keystatic "Page header" is "Photo behind the menu"), so every other page
+   carries not a byte of it. Two parts:
+
+     1. THE MENU OVER THE PHOTOGRAPH — the shared header (Base.astro: the same
+        nav, the same links, the same Donate / Join / How to vote and the same
+        shared.js toggle as every page) made transparent over the photograph,
+        with the white wordmark; on phones the centred wordmark and the ink
+        phone-menu sheet closed by the yellow band. These rules were the
+        campaign homepage's (campaign-home.css) and moved here unchanged in
+        round 5 (ADR-99), so the homepage and the interior pages share one
+        source. campaign-home.css keeps only the menu bar's entrance, which
+        belongs to the homepage's opening.
+
+     2. THE PHOTO HEADER (.ph-*, src/components/PhotoHeader.astro) — an
+        interior page's own photograph (or two, side by side, split by a
+        hairline like the homepage's contact sheet) running full width behind
+        that menu, with the page's eyebrow, <h1> and intro set in the
+        homepage's display style over the lower part of the photograph and the
+        yellow band closing it. A generous band, not a full screen: the page's
+        content is plainly below it. Plus the how-to-vote pages' own variants
+        of it (section 3), which keep their existing markup.
+
+   The house canon, not a new look: paper, ink, Democrat Yellow strictly as a
+   fill and a highlighter (never text), yellow focus rings on the photograph;
+   Bricolage Grotesque for the heading, Public Sans for everything small; the
+   site's own .hl sweep, drawn as the homepage's band.
+
+   CASCADE: this file is linked before a page's own head-slot stylesheets and
+   before the bundled global.css, so a rule here that must beat one of those
+   carries more specificity, never a later position. Section 2 and 3 are
+   SCREEN ONLY: print keeps each page's own print rules (the how-to-vote
+   pages' printed sheets are exactly what they were); section 4 hides the
+   photographs from print.
+
+   TEXT OVER PHOTOGRAPHS is carried by ink, never by text-shadow (the shadows
+   are softeners only): the copy sits on a plate attached to the copy itself
+   (.ph-copy::before), at least 66% ink under the first line and deeper below.
+   Measured against the worst photograph an editor could upload (pure white):
+   66% ink over white is #69736F, 4.8:1 for paper type — and every line of
+   small text sits lower on the plate, on 70% or more (5.4:1 and up). A real
+   photograph only improves that.
+   ============================================================ */
+
+:root { --ph-out: cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* ==========================================================================
+   1. The shared header, laid over the photograph
+   ========================================================================== */
+/* Same markup as every page (Base.astro); a page with a photograph behind
+   its menu only repaints it. It is taken out of the flow so the photograph
+   runs to the top of the screen. */
+#site-header.site-header--overlay {
+  position: absolute; inset: 0 0 auto 0;
+  background: transparent; border-bottom: 0;
+}
+/* The bar's own scrim, so the white logo and links hold over the photograph
+   whatever sits behind them (5.58:1 worst pixel on the seed photos): ink at
+   72%, 50% at 62% and nothing at the foot — written as the 8-digit hex the
+   homepage's bundled stylesheet always served it as (b8 and 80 are 72.2% and
+   50.2%), so the homepage renders to the pixel what it did before this file. */
+#site-header.site-header--overlay::before {
+  content: ''; position: absolute; inset: 0 0 -2.5rem 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(180deg, #1c2b29b8 0%, #1c2b2980 62%, #1c2b2900 100%);
+}
+#site-header.site-header--overlay:has(.nav-links.is-open) { background: var(--ink); }
+/* The site's teal-ink ring vanishes on the scrim (and on the ink bar while the
+   menu is open), so the logo link's ring is yellow at EVERY width — it is the
+   phone's first tab stop. The menu panel's own links stay on the teal ring,
+   which is right on paper. */
+.site-header--overlay .nav-logo:focus-visible { outline-color: var(--yellow); }
+/* Full width, on the hero's own margins, so the logo stands over the first
+   word of the headline and the menu ends over the candidates' faces. */
+.site-header--overlay .nav { max-width: none; padding-inline: clamp(1rem, 4.4vw, 3.5rem); }
+
+@media (max-width: 1023px) {
+  /* ONE logo on the screen, the white wordmark, centred in the bar; the
+     existing burger, in white, on the right. The menu it opens is repainted
+     in the hero's colours (below: "The phone menu"). */
+  .site-header--overlay .nav { display: grid; grid-template-columns: 1fr auto 1fr; }
+  .site-header--overlay .nav-logo { grid-column: 2; justify-self: center; }
+  .site-header--overlay .nav-logo img { height: auto; width: min(54vw, 15rem); }
+  .site-header--overlay .nav-toggle { grid-column: 3; justify-self: end; margin-left: 0; border-color: var(--paper); }
+  .site-header--overlay .burger,
+  .site-header--overlay .burger::before,
+  .site-header--overlay .burger::after { background: var(--paper); }
+  .site-header--overlay .nav-toggle[aria-expanded="true"] .burger { background: transparent; }
+  .site-header--overlay .nav-toggle:focus-visible { outline-color: var(--yellow); }
+
+  /* THE PHONE MENU, in the hero's colours. Same markup, same links, same
+     shared.js toggle as every page (Base.astro); only a page with a
+     photograph behind its menu repaints it — every other page keeps the
+     site's paper panel. It drops from the ink bar as one ink sheet closed by
+     the hero's yellow band: the links in the display face at poster size,
+     the highlighter on the one under the finger, pointer or keyboard (and on
+     the current page), and Donate / Join / How to vote as the hero's buttons
+     — the house radius, the display face, a 56px row. It scrolls inside
+     itself on a short screen (global.css caps it at the screen's height),
+     and keeps clear of a notch or a home bar (env(safe-area-inset-*)).
+     Everything is scoped #site-header.site-header--overlay: global.css is
+     linked after this file, so its .nav-links rules would win a tie. */
+  #site-header.site-header--overlay .nav-links {
+    align-items: flex-start; gap: 0.15rem;
+    padding: 0.6rem max(clamp(1rem, 4.4vw, 3.5rem), env(safe-area-inset-right)) calc(1.75rem + env(safe-area-inset-bottom)) max(clamp(1rem, 4.4vw, 3.5rem), env(safe-area-inset-left));
+    background: var(--ink); color: var(--paper);
+    border-bottom: 6px solid var(--yellow);
+  }
+  #site-header.site-header--overlay .nav-links a:not(.btn) {
+    display: flex; align-items: center; min-height: 52px; max-width: 100%;
+    padding: 0.3rem 0.2em; margin-inline: -0.2em; border-radius: 4px;
+    font-family: var(--font-display); font-weight: 800;
+    font-size: clamp(1.75rem, 1.3rem + 2.3vw, 2.6rem); line-height: 1.05; letter-spacing: -0.03em;
+    color: var(--paper); white-space: normal;
+    /* The site's .hl gradient, swept in from the left. */
+    background: linear-gradient(104deg, transparent 0.9%, var(--yellow) 2.4%, var(--yellow) 97.8%, transparent 99%) no-repeat 0 50% / 0% 78%;
+  }
+  #site-header.site-header--overlay .nav-links a:not(.btn):hover,
+  #site-header.site-header--overlay .nav-links a:not(.btn):focus-visible,
+  #site-header.site-header--overlay .nav-links a:not(.btn)[aria-current='page'] {
+    color: var(--ink); background-size: 100% 78%; box-shadow: none;
+  }
+  /* Paper rings on the ink sheet (14.5:1): a yellow one would run into the
+     highlighter and the Join button it surrounds. */
+  #site-header.site-header--overlay .nav-links :focus-visible { outline-color: var(--paper); }
+  #site-header.site-header--overlay .nav-cta {
+    align-self: stretch; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.85rem;
+    margin: 1.15rem 0 0; padding-top: 1.35rem;
+    border-top: 1px solid rgb(255 253 247 / 0.18);
+  }
+  #site-header.site-header--overlay .nav-cta .btn {
+    min-height: 56px; padding: 0.7rem 1rem;
+    border-width: 2px; border-radius: var(--radius);
+    font-family: var(--font-display); font-weight: 800; font-size: 1.15rem; letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+  /* Donate: the hero's outline button, paper on ink. */
+  #site-header.site-header--overlay .nav-cta .btn--ghost { background: transparent; border-color: var(--paper); color: var(--paper); }
+  #site-header.site-header--overlay .nav-cta .btn--ghost:hover { background: var(--paper); color: var(--ink); }
+  /* Join: Democrat Yellow, ink type, ink border and offset shadow (the canon). */
+  #site-header.site-header--overlay .nav-cta .btn--primary { background: var(--yellow); color: var(--ink); border-color: var(--ink); box-shadow: 4px 4px 0 var(--ink); }
+  #site-header.site-header--overlay .nav-cta .btn--primary:hover { background: var(--yellow-soft); }
+  /* How to vote (nav-htv.css: teal, ink type, 5.0:1) takes the whole last row. */
+  #site-header.site-header--overlay .nav-cta .btn--htv { grid-column: 1 / -1; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    #site-header.site-header--overlay .nav-links { transition: opacity 0.18s ease, transform 0.32s var(--ph-out); }
+    #site-header.site-header--overlay .nav-links > * { transition: opacity 0.22s ease, transform 0.32s var(--ph-out), background-size 0.3s var(--ph-out), color 0.16s ease; }
+    #site-header.site-header--overlay .nav-links > :nth-child(2) { transition-delay: 0.03s, 0.03s, 0s, 0s; }
+    #site-header.site-header--overlay .nav-links > :nth-child(3) { transition-delay: 0.06s, 0.06s, 0s, 0s; }
+    #site-header.site-header--overlay .nav-links > :nth-child(4) { transition-delay: 0.09s, 0.09s, 0s, 0s; }
+    #site-header.site-header--overlay .nav-links > :nth-child(5) { transition-delay: 0.12s, 0.12s, 0s, 0s; }
+    #site-header.site-header--overlay .nav-links > :nth-child(n + 6) { transition-delay: 0.15s, 0.15s, 0s, 0s; }
+    @starting-style {
+      #site-header.site-header--overlay .nav-links.is-open { opacity: 0; transform: translateY(-0.6rem); }
+      #site-header.site-header--overlay .nav-links.is-open > * { opacity: 0; transform: translateY(-0.4rem); }
+    }
+  }
+}
+
+/* Computer screens: 1024px and up. */
+@media (min-width: 1024px) {
+  .site-header--overlay .nav { padding-inline: clamp(2rem, 4vw, 4rem); }
+
+  /* The white menu. Join stays the site's yellow primary; Donate becomes a
+     white outline; every link keeps the 44px row the site gives it. */
+  .site-header--overlay .nav-links a:not(.btn) { color: var(--paper); }
+  .site-header--overlay .nav-links a:not(.btn):hover { background: none; color: var(--paper); box-shadow: inset 0 -3px 0 var(--yellow); border-radius: 6px 6px 0 0; }
+  .site-header--overlay .nav-cta .btn--ghost { border-color: var(--paper); color: var(--paper); }
+  .site-header--overlay .nav-cta .btn--ghost:hover { background: var(--paper); color: var(--ink); }
+  .site-header--overlay .nav-links :focus-visible { outline-color: var(--yellow); }
+}
+
+/* ==========================================================================
+   2. The photo header (.ph-*, src/components/PhotoHeader.astro) — screen only
+   ==========================================================================
+   One breakpoint, the site's 1024px; below it the phone tree. Two height
+   conditions, named where they are used. */
+@media screen {
+  .ph {
+    --ph-ink: 28 43 41;                 /* --ink as an rgb triplet, for the scrims */
+    --ph-header: 4.25rem;               /* the shared nav's own min-height */
+    --ph-pad: clamp(1rem, 4.4vw, 3.5rem);   /* the menu's own margins */
+    --ph-foot: clamp(1.5rem, 4.5svh, 2.75rem);
+    /* Phones: the photograph is a strip across the top of the screen, behind
+       the menu, and the copy rises 6rem into its foot and runs on below it on
+       the band's ink — so however long a page's intro is, it never covers the
+       faces (the postcode page's phone layout, since round 3). */
+    --ph-photo-h: clamp(20rem, calc(var(--ph-header) + 80vw), 34rem);
+    --ph-overlap: 6rem;
+    position: relative;
+    isolation: isolate;
+    /* clip where the browser knows it (a hidden box is still a scroll
+       container), so nothing can scroll the band sideways. */
+    overflow: hidden;
+    overflow: clip;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: end;
+    padding-top: max(calc(var(--ph-header) + 1.5rem), calc(var(--ph-photo-h) - var(--ph-overlap)));
+    background: var(--ink);
+    color: var(--paper);
+    /* The homepage's closing rule. */
+    border-bottom: 6px solid var(--yellow);
+  }
+
+  /* The photographs. One fills the band; two share it, side by side, split
+     by a 3px hairline — the band's own background showing through the gap,
+     ink under the menu turning to paper below it, so no seam strikes through
+     a menu link (the homepage's contact sheet). A frame whose photograph has
+     not arrived is ink, never a white field. */
+  .ph-frames {
+    position: absolute; inset: 0 0 auto 0; height: var(--ph-photo-h); z-index: -2;
+    display: grid; grid-template-columns: minmax(0, 1fr);
+    background: var(--ink);
+  }
+  /* Phones: the strip's foot fades into the band's ink, so the copy that runs
+     on below it sits on one ground. */
+  .ph-frames::after {
+    content: ''; position: absolute; inset: auto 0 0 0; height: 40%; pointer-events: none;
+    background: linear-gradient(180deg, rgb(var(--ph-ink) / 0), rgb(var(--ph-ink) / 0.55) 55%, var(--ink));
+  }
+  .ph-frames[data-count='2'] {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3px;
+    background: linear-gradient(180deg, var(--ink) 0, var(--ink) 5rem, var(--paper) 9.5rem);
+  }
+  .ph-frame { position: relative; margin: 0; overflow: hidden; background: var(--ink); }
+  .ph-frame img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%; max-width: none;
+    object-fit: cover; object-position: var(--ph-pos-phone, 50% 40%);
+  }
+
+  /* The photograph's grade: a little weight at the top (the menu has its
+     own scrim), open through the faces, deepening toward the foot. The
+     copy's own plate (below) carries its contrast. */
+  .ph-scrim {
+    position: absolute; inset: 0 0 auto 0; height: var(--ph-photo-h); z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(120% 70% at 0% 100%, rgb(var(--ph-ink) / 0.45) 0%, rgb(var(--ph-ink) / 0.2) 45%, rgb(var(--ph-ink) / 0) 75%),
+      linear-gradient(180deg,
+        rgb(var(--ph-ink) / 0.4) 0%,
+        rgb(var(--ph-ink) / 0.1) 16%,
+        rgb(var(--ph-ink) / 0.05) 32%,
+        rgb(var(--ph-ink) / 0.3) 60%,
+        rgb(var(--ph-ink) / 0.4) 100%);
+  }
+
+  /* The copy, on the menu's margins, so the heading stands under the logo. */
+  .ph-body {
+    position: relative; min-width: 0;
+    padding: 0 var(--ph-pad) var(--ph-foot);
+  }
+  .ph-copy { position: relative; min-width: 0; }
+  /* The plate: transparent 7rem above the copy, 66% ink by its first line and
+     deeper below it, down to the yellow band. It is attached to the copy, so
+     however long the heading runs, the ink behind every line is the same. */
+  .ph-copy::before {
+    content: ''; position: absolute; z-index: -1; pointer-events: none;
+    top: -7rem; bottom: calc(-1 * var(--ph-foot));
+    left: calc(-1 * var(--ph-pad)); right: calc(-1 * var(--ph-pad));
+    background: linear-gradient(180deg,
+      rgb(var(--ph-ink) / 0) 0,
+      rgb(var(--ph-ink) / 0.4) 3.5rem,
+      rgb(var(--ph-ink) / 0.66) 7rem,
+      rgb(var(--ph-ink) / 0.78) calc(7rem + 35%),
+      rgb(var(--ph-ink) / 0.82) 100%);
+  }
+
+  /* The eyebrow, on the yellow dash the site uses to introduce a label. */
+  .ph-kicker {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem 0.85rem;
+    max-width: none; margin: 0 0 clamp(0.7rem, 2svh, 1.15rem);
+    font-family: var(--font-body); font-weight: 650;
+    font-size: clamp(0.9rem, 0.82rem + 0.35vw, 1.08rem); line-height: 1.3;
+    letter-spacing: 0; text-transform: none;
+    color: var(--paper);
+  }
+  .ph-kicker::before {
+    content: ''; flex: none; width: 2.25rem; height: 4px; border-radius: 2px; background: var(--yellow);
+  }
+  /* The heading at the homepage's display weight, bounded by width AND
+     height so it never pushes the band past the screen. */
+  .ph .ph-title {
+    max-width: 18ch; margin: 0;
+    font-family: var(--font-display); font-weight: 800;
+    font-size: clamp(2.3rem, min(10.5vw, 6.6svh), 3.75rem);
+    line-height: 0.95; letter-spacing: -0.035em;
+    color: var(--paper);
+    text-wrap: balance;
+    /* A softener only; the plate carries the contrast. */
+    text-shadow: 0 2px 24px rgb(var(--ph-ink) / 0.45);
+  }
+  /* The site's .hl, drawn as the homepage's band (the full inline box runs
+     into the line above at this line height), seated on the baseline. It
+     still sweeps in on first view (effects.js) at this height, and is simply
+     drawn under reduced motion. */
+  .ph .ph-title .hl {
+    color: var(--ink); text-shadow: none;
+    padding-inline: 0.08em; margin-inline: -0.02em;
+    background-repeat: no-repeat; background-size: 100.5% 70%; background-position: 0 86%;
+  }
+  html.js-motion .ph .ph-title .hl { background-size: 0% 70%; }
+  html.js-motion .ph .ph-title .hl.hl-in { background-size: 100.5% 70%; }
+  .ph .ph-sub {
+    max-width: 40ch; margin: clamp(0.7rem, 1.9svh, 1.15rem) 0 0;
+    font-size: clamp(1rem, 0.94rem + 0.4vw, 1.25rem); font-weight: 500; line-height: 1.42;
+    color: var(--paper);
+    text-shadow: 0 1px 12px rgb(var(--ph-ink) / 0.5);
+  }
+  /* A second, quieter line (the representatives' fixed sentence). */
+  .ph .ph-note {
+    max-width: 54ch; margin: 0.7rem 0 0;
+    font-size: 0.95rem; font-weight: 600; line-height: 1.45;
+    color: rgb(255 253 247 / 0.9);
+  }
+  .ph a:not(.btn) { color: var(--paper); text-decoration-color: var(--yellow); text-decoration-thickness: 2px; text-underline-offset: 0.2em; }
+  .ph a:not(.btn):hover { color: var(--paper); text-decoration-thickness: 3px; }
+  /* Teal-ink rings vanish on a photograph; yellow holds well over 3:1 on the plate. */
+  .ph :focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; border-radius: 4px; }
+
+  /* A photograph settles once as the page opens — only where motion is
+     welcome and scripting is on (the page is already finished without it;
+     nothing is hidden at rest). */
+  @media (prefers-reduced-motion: no-preference) and (scripting: enabled) {
+    .ph-frame img { animation: ph-settle 1.6s var(--ph-out) both; }
+    .ph-frame + .ph-frame img { animation-delay: 0.12s; }
+  }
+
+  /* Computer screens: the photograph fills the whole band, with the copy
+     over its lower part — a generous band, not a screen, so the page's own
+     content shows below it (svh, so a browser's address bar never hides its
+     foot; vh first as the fallback). It grows with its copy rather than
+     clipping it. */
+  @media (min-width: 1024px) {
+    .ph { padding-top: calc(var(--ph-header) + 1.5rem); }
+    .ph-frames, .ph-scrim { inset: 0; height: auto; }
+    .ph-frames::after { content: none; }
+    .ph {
+      --ph-pad: clamp(2rem, 4vw, 4rem);
+      --ph-foot: clamp(1.75rem, 5svh, 3.25rem);
+      min-height: clamp(30rem, 68vh, 48rem);
+      min-height: clamp(30rem, 68svh, 48rem);
+    }
+    .ph-frame img { object-position: var(--ph-pos, 50% 40%); }
+    /* The copy is as wide as its longest line; the plate is full under it,
+       then fades out over 16rem, so the photograph beyond the copy keeps its
+       light (deepen locally, not globally). */
+    .ph-copy { width: fit-content; max-width: min(100%, 64rem); }
+    .ph-copy::before {
+      right: -16rem;
+      -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 16rem), transparent);
+      mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 16rem), transparent);
+    }
+    .ph-kicker { font-size: clamp(1rem, 0.7rem + 0.45vw, 1.25rem); }
+    .ph .ph-title { max-width: 17ch; font-size: clamp(3.1rem, min(5.4vw, 9.8svh), 6.5rem); }
+    .ph .ph-sub { max-width: 44ch; font-size: clamp(1.1rem, 0.78rem + 0.6vw, 1.5rem); font-weight: 600; }
+  }
+
+  /* Framed (.ph--framed — the how-to-vote district and region pages): on a
+     computer screen the photograph is framed on the right, behind a short
+     fade from the ink, and the copy sits on solid ink beside it — the
+     postcode page's own banner composition. A close, tall selfie keeps its
+     whole face in view and the page's long intro never runs over it. */
+  @media (min-width: 1024px), (max-width: 1023px) and (max-height: 500px) {
+    .ph--framed .ph-frames,
+    .ph--framed .ph-scrim { left: calc(50% - min(4vw, 3.5rem)); }
+    .ph--framed .ph-scrim {
+      background:
+        linear-gradient(90deg, var(--ink) 0, rgb(var(--ph-ink) / 0.82) 2.5rem, rgb(var(--ph-ink) / 0.3) 5rem, rgb(var(--ph-ink) / 0) 7.5rem),
+        linear-gradient(180deg, rgb(var(--ph-ink) / 0.4) 0%, rgb(var(--ph-ink) / 0) 18%),
+        linear-gradient(to top, rgb(var(--ph-ink) / 0.55) 0%, rgb(var(--ph-ink) / 0) 32%);
+    }
+  }
+  @media (min-width: 1024px) {
+    .ph--framed .ph-body { padding-right: calc(50% + min(4vw, 3.5rem) + 1rem); }
+    .ph--framed .ph-copy { width: auto; max-width: none; }
+    .ph--framed .ph-copy::before { display: none; }
+  }
+
+  /* A phone on its side: the photograph is the first screen, the heading
+     rising into its foot; the page scrolls on to the rest rather than
+     crowding the faces under the copy. */
+  @media (max-width: 1023px) and (max-height: 500px) {
+    .ph { --ph-photo-h: max(18rem, 100svh); }
+    /* A wide strip trims a photo's top and bottom, as a computer screen does,
+       so it keeps the computer screens' part of the photo in view. */
+    .ph-frame img { object-position: var(--ph-pos, 50% 40%); }
+    .ph .ph-title { font-size: clamp(2rem, 6.4vw, 3rem); }
+  }
+
+  /* ========================================================================
+     3. Pages that keep their own header markup behind the menu
+     ========================================================================
+     3a. The candidates hub's announcement page (the hoarding, candidates.astro)
+     with "Photo behind the menu": the same hoarding, its photograph and frames
+     running up behind the menu, its copy starting below it. (Its own rules
+     live in the page and are scoped #candPage, so these carry the same.) */
+  #candPage .hoard.hoard--behind { padding-top: calc(4.25rem + clamp(1.75rem, 4vw, 2.75rem)); }
+  @media (min-width: 900px) {
+    #candPage .hoard.hoard--behind { min-height: min(100svh, 48.25rem); }
+  }
+
+  /* 3a′. The representatives list page: its fixed sentence follows the band. */
+  .rep-hub-photo-after { padding-top: clamp(1.1rem, 3vw, 1.6rem); }
+  .rep-hub-photo-after .rep-hub-fixed { margin-top: 0; }
+
+  /* ========================================================================
+     3b–c. The how-to-vote pages — their existing markup, kept
+     ========================================================================
+     3b. The postcode page (HtvFinder.astro's banner, .htvf-banner--behind):
+     its photograph now runs to the top of the screen behind the menu, the
+     copy is set in the display style above, and the search panel stays the
+     opaque paper panel it always was. Scoped .htvf to beat htv-finder.css,
+     which is linked after this file. */
+  .htvf .htvf-banner--behind { border-bottom-width: 6px; }
+  .htvf .htvf-banner--behind .htvf-banner-inner {
+    padding-top: calc(4.25rem + clamp(2rem, 5.5vw, 3.5rem));
+  }
+  /* The eyebrow as the homepage's: the yellow dash, then what and when —
+     on one line where it fits, stacked beside the dash where it does not. */
+  .htvf .htvf-banner--behind .htvf-kicker {
+    display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0.15rem 0.85rem;
+    font-weight: 650; font-size: clamp(0.9rem, 0.82rem + 0.35vw, 1.08rem); line-height: 1.3;
+    letter-spacing: 0; text-transform: none;
+  }
+  .htvf .htvf-banner--behind .htvf-kicker::before { display: block; width: 2.25rem; height: 4px; margin: 0; }
+  .htvf .htvf-banner--behind .htvf-kicker-part { display: block; grid-column: 2; margin: 0; }
+  .htvf .htvf-banner--behind .htvf-kicker-dot { display: none; }
+  @media (min-width: 1200px) {
+    .htvf .htvf-banner--behind .htvf-kicker { display: flex; flex-wrap: wrap; gap: 0.35rem 0.85rem; }
+    .htvf .htvf-banner--behind .htvf-kicker-dot { display: inline; }
+  }
+  .htvf .htvf-banner--behind .htvf-h1 {
+    font-weight: 800; line-height: 0.95; letter-spacing: -0.035em;
+    text-shadow: 0 2px 24px rgb(28 43 41 / 0.45);
+  }
+  .htvf .htvf-banner--behind .htvf-h1 .hl {
+    text-shadow: none; padding-inline: 0.08em; margin-inline: -0.02em;
+    background-repeat: no-repeat; background-size: 100.5% 70%; background-position: 0 86%;
+  }
+  html.js-motion .htvf .htvf-banner--behind .htvf-h1 .hl { background-size: 0% 70%; }
+  html.js-motion .htvf .htvf-banner--behind .htvf-h1 .hl.hl-in { background-size: 100.5% 70%; }
+  .htvf .htvf-banner--behind .htvf-sub { text-shadow: 0 1px 12px rgb(28 43 41 / 0.5); }
+  .htvf .htvf-banner--behind :is(.htvf-kicker, .htvf-h1, .htvf-sub) a:focus-visible { outline-color: var(--yellow); }
+  @media (max-width: 899px) {
+    /* Phones: the photograph strip now starts at the top of the screen, so
+       it is the menu's height taller; the copy follows it on ink, as before. */
+    .htvf .htvf-banner--behind { --htvf-photo-h: calc(4.25rem + clamp(190px, 58vw, 380px)); }
+    .htvf .htvf-banner--behind .htvf-banner-inner { padding-top: calc(var(--htvf-photo-h) - 2.6rem); }
+  }
+  @media (max-width: 420px) {
+    .htvf .htvf-banner--behind { --htvf-photo-h: calc(4.25rem + clamp(160px, 50vw, 210px)); }
+  }
+  @media (max-width: 899px) and (max-height: 640px) {
+    .htvf .htvf-banner--behind { --htvf-photo-h: calc(4.25rem + 132px); }
+  }
+
+  /* 3c. A district’s or region’s page with a photograph (Keystatic → How to
+     Vote page → "Page photos"): the PhotoHeader band opens the result
+     section and carries its breadcrumb, eyebrow, <h1> and intro — the same
+     elements, so they print exactly as before (htv-finder.css's print rules;
+     nothing here applies to print). The tools follow under the band. */
+  .htvf-result.htvf-result--photo { padding-top: 0; }
+  .htvf-result--photo .htvf-result-grid { margin-top: clamp(1.75rem, 4vw, 2.75rem); }
+  .htvf-result--photo .ph .htvf-result-head { padding-bottom: 0; border-bottom: 0; }
+  .htvf-result--photo .ph .htvf-result-head::after { display: none; }
+  .htvf-result--photo .ph .htvf-crumbs ol { margin-bottom: clamp(0.8rem, 2.2svh, 1.25rem); font-size: 0.95rem; }
+  .htvf-result--photo .ph .htvf-crumbs li + li::before { border-color: rgb(255 253 247 / 0.8); }
+  .htvf-result--photo .ph .htvf-crumbs a { color: var(--paper); }
+  .htvf-result--photo .ph .htvf-crumbs [aria-current] { color: var(--paper); font-weight: 650; }
+  .htvf-result--photo .ph .htvf-result-eyebrow {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem 0.85rem;
+    margin: 0 0 clamp(0.7rem, 2svh, 1.15rem);
+    font-family: var(--font-body); font-weight: 650;
+    font-size: clamp(0.9rem, 0.82rem + 0.35vw, 1.08rem); line-height: 1.3;
+    letter-spacing: 0; text-transform: none; color: var(--paper);
+  }
+  .htvf-result--photo .ph .htvf-result-eyebrow::before {
+    content: ''; flex: none; width: 2.25rem; height: 4px; border-radius: 2px; background: var(--yellow);
+  }
+  .htvf-result--photo .ph .htvf-result-eyebrow { text-wrap: balance; }
+  /* The heading in the homepage's display style, its highlight the band. */
+  .htvf-result--photo .ph .htvf-result-h {
+    color: var(--paper); font-weight: 800; line-height: 0.98; letter-spacing: -0.03em;
+    text-wrap: balance; text-shadow: 0 2px 24px rgb(28 43 41 / 0.45);
+  }
+  .htvf-result--photo .ph .htvf-result-h .hl {
+    color: var(--ink); text-shadow: none; padding-inline: 0.08em; margin-inline: -0.02em;
+    background-repeat: no-repeat; background-size: 100.5% 70%; background-position: 0 86%;
+  }
+  html.js-motion .htvf-result--photo .ph .htvf-result-h .hl { background-size: 0% 70%; }
+  html.js-motion .htvf-result--photo .ph .htvf-result-h .hl.hl-in { background-size: 100.5% 70%; }
+  .htvf-result--photo .ph .htvf-result-region {
+    margin-top: clamp(0.7rem, 1.9svh, 1.15rem); max-width: 60ch;
+    font-size: clamp(1.02rem, 0.94rem + 0.4vw, 1.25rem);
+    color: var(--paper); text-shadow: 0 1px 12px rgb(28 43 41 / 0.5);
+  }
+  /* The search's split note (region pages) keeps its sand panel, opaque. */
+  .htvf-result--photo .ph .htvf-from { color: var(--ink); }
+  .htvf-result--photo .ph .htvf-from a { color: var(--teal-deep); }
+  @media (min-width: 980px) {
+    /* The tools take the row the heading has left. */
+    .htvf-result--photo .htvf-result-grid { grid-template-areas: 'tools tools' 'la la' 'lc lc' 'close close'; }
+    .htvf-result--photo .htvf-result-tools {
+      grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 2rem;
+      padding: 0 0 1.2rem; border-bottom: 3px solid var(--ink);
+    }
+  }
+}
+
+/* ==========================================================================
+   4. Print — the photographs never print
+   ========================================================================== */
+@media print {
+  .ph-frames, .ph-scrim { display: none !important; }
+  /* The heading prints as plain ink type on the site's margins. (On the
+     how-to-vote pages htv-finder.css lays out the printed sheet, unchanged:
+     their band keeps no margins of its own, as their header never had.) */
+  .ph-body { padding: 0 var(--gutter) 1rem; }
+  .htvf-result .ph-body { padding: 0; }
+}
+
+@keyframes ph-settle { from { transform: scale(1.06); } to { transform: none; } }

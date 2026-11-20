@@ -1,0 +1,55 @@
+/* ============================================================
+   The header's "How to vote" button (data-testid="nav-htv")
+   ============================================================
+   Linked by src/layouts/Base.astro ONLY while the build renders the postcode
+   how-to-vote pages (htvFinderOn() — Keystatic → How to Vote page →
+   "Postcode how-to-vote page"), on every page that has the shared header. It
+   lives here, not in global.css, because global.css is bundled into every
+   page: a rule there would change the live site's stylesheet (and every live
+   page's HTML, which names the bundle) while the button is preview-only.
+
+   THE BUTTON: Join's grammar — the same pill, the 2px ink border and the hard
+   3px ink offset shadow — on Teal Green instead of Democrat Yellow, with ink
+   type (#1c2b29 on #29a895 is 5.0:1; never white on teal). It sits to the
+   right of Join on computer screens and under it in the phone menu.
+
+   THE ROOM FOR IT. A third button needs about 120px more than the header row
+   had (measured: 8px spare at 1024px wide and 57px from 1152px up, where the
+   row stops growing; the campaign homepage's full-width bar was already 9px
+   and 19px over at 1024 and 1100). So, only while the button is there and
+   only from 1024px up, the row tightens: the menu links sit closer and the
+   three buttons are a little narrower; between 1024px and 1279px the links
+   are a touch smaller and the campaign homepage's bar keeps the site's normal
+   gutter; below 1100px the wordmark is a touch smaller too. Measured after:
+   every width from 1024 to 1440 fits on one line in both bars, with at least
+   24px between the wordmark and the first link. Nothing wraps and nothing is
+   hidden; below 1024px the menu is the phone panel, untouched.
+   ============================================================ */
+
+/* Doubled class: the bundled global.css (.btn, .btn--sm) is linked AFTER this
+   file, so equal specificity would lose to it. */
+.btn.btn--htv {
+  background: var(--teal); color: var(--ink); border-color: var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.btn.btn--htv:hover { color: var(--ink); box-shadow: 1px 1px 0 var(--ink); transform: translate(2px, 2px); }
+.btn.btn--htv[aria-current='page'] { box-shadow: inset 0 -3px 0 var(--ink), 3px 3px 0 var(--ink); }
+
+@media (min-width: 1024px) {
+  #site-header .nav { gap: 0.75rem; }
+  #site-header .nav-links { gap: 0; }
+  #site-header .nav-links a:not(.btn) { padding-inline: 0.5rem; }
+  #site-header .nav-cta { gap: 0.4rem; margin-left: 0.35rem; }
+  #site-header .nav-cta .btn--sm { padding-inline: 0.8rem; }
+}
+@media (min-width: 1024px) and (max-width: 1279px) {
+  #site-header .nav-links a:not(.btn) { padding-inline: 0.4rem; font-size: 0.92rem; }
+  #site-header .nav-cta .btn--sm { padding-inline: 0.7rem; font-size: 0.86rem; }
+  /* The campaign homepage's full-width bar keeps the site's own gutter here
+     (its stylesheet widens it to 4vw, which is what overhung at 1024/1100). */
+  #site-header.site-header--overlay .nav { padding-inline: var(--gutter); }
+}
+@media (min-width: 1024px) and (max-width: 1099px) {
+  #site-header .nav-logo img { height: 2.2rem; }
+  #site-header .nav-links a:not(.btn) { padding-inline: 0.34rem; font-size: 0.9rem; }
+}

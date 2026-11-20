@@ -1,0 +1,1457 @@
+/* ============================================================
+   /how-to-vote — the POSTCODE HOW-TO-VOTE PAGES (.htvf-*, .htvc-*)
+   Owners: src/components/HtvFinder.astro (the landing page) and
+   src/components/htv/* (the district and region pages and the registered
+   cards), + /assets/js/htv-finder.js
+
+   Linked through Base's head slot ONLY by those pages (src/components/htv/
+   Htv*Page.astro), so no other page (and no build with the pages off)
+   carries a byte of it.
+
+   Built from the design-system tokens in global.css — paper, sand, ink,
+   Democrat Yellow (a fill and a highlighter, never text), teal-deep for small
+   coloured text — and the site's signature treatments: the photo banner on
+   ink (.page-banner's cousin), the .hl sweep, .btn--primary, the framed panel
+   with a yellow offset shadow, and the owner box (yellow fill, ink numeral,
+   ink border, offset ink shadow) for our 1.
+
+   CONTRAST: from 1024px the copy sits on solid ink and the photo is framed
+   to its right behind a short left-edge fade; below that, every run of light
+   text over the photograph sits on the scrim's dense zone. Both checked
+   against the worst pixel under the text (see the change that added this
+   layout). The search panel and everything below the banner are opaque.
+
+   MOTION: the photo's slow settle is the only animation, gated on
+   html.js-motion (effects.js adds it only with JS running and no
+   reduced-motion preference); the base state is the finished, still page.
+   CASCADE: Astro links the bundled global.css AFTER this sheet, so a rule
+   here that overrides a global one needs more specificity, not a later
+   position (e.g. `.htvf-search .htvf-go` over `.btn`, and the print rules'
+   `html body #site-footer` over global.css's print `#site-footer`).
+   ============================================================ */
+
+/* The sitewide Join/Donate follow bar would slide over the voting
+   instructions people came to read — not on this page. (shared.js still
+   measures the bar; display:none gives it no height, so it reserves none.) */
+body[data-page^='/how-to-vote'] .follow-bar { display: none !important; }
+
+/* Search is the script's; without it the page says so and the list lede
+   offers only what works. Family mode (.htvfam) is the exception: its builder
+   is the page, so it is drawn from the first paint — revealing it when the
+   script arrives pushed the district list down under the reader (CLS 0.2) —
+   and steps aside only when scripting is off (htv-custom.css). */
+.htvf:not(.is-ready):not(.htvfam) .htvf-js-only, .htvf.is-ready .htvf-no-js { display: none; }
+
+/* ------------------------------------------------------------ banner */
+/* z-index 2: the suggestion list may hang below the banner, and must stay
+   above the sections after it (still below the sticky header). */
+.htvf-banner {
+  position: relative; isolation: isolate; z-index: 2;
+  background: var(--ink); color: var(--paper);
+  border-bottom: 5px solid var(--yellow);
+}
+.htvf-banner-media { position: absolute; inset: 0; z-index: -1; overflow: hidden; }
+.htvf-banner-img {
+  width: 100%; height: 100%; max-width: none;
+  object-fit: cover; object-position: 62% 40%;
+}
+/* 900–1023px: the photo fills the banner; the scrim is dense where the words
+   are and opens up across the volunteers on the right. */
+.htvf-banner-scrim {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(90deg,
+      rgb(28 43 41 / 90%) 0%,
+      rgb(28 43 41 / 84%) max(40rem, calc(50% + 4rem)),
+      rgb(28 43 41 / 46%) calc(max(40rem, calc(50% + 4rem)) + 14rem),
+      rgb(28 43 41 / 18%) 100%),
+    linear-gradient(to top, rgb(28 43 41 / 55%) 0%, transparent 32%);
+}
+.htvf-banner-inner {
+  display: grid; gap: clamp(1.25rem, 2.6vw, 1.9rem); align-content: center;
+  min-height: clamp(560px, 76vh, 720px);
+  padding-block: clamp(2.25rem, 5.5vw, 4rem);
+}
+.htvf-banner--nophoto .htvf-banner-inner { min-height: 0; }
+.htvf-banner-copy { max-width: 38rem; }
+.htvf-kicker {
+  color: var(--paper); font-weight: 700; font-size: 0.8rem;
+  letter-spacing: 0.16em; text-transform: uppercase;
+}
+.htvf-kicker::before {
+  content: ''; display: inline-block; vertical-align: middle;
+  width: 1.6rem; height: 3px; margin: -0.15em 0.6rem 0 0; border-radius: 2px;
+  background: var(--yellow);
+}
+.htvf-h1 {
+  color: var(--paper); margin-top: 0.7rem;
+  font-size: clamp(2.3rem, 1.4rem + 3.6vw, 4.4rem); line-height: 1.02; letter-spacing: -0.02em;
+  max-width: 14ch; text-wrap: balance;
+}
+.htvf-h1 .hl { color: var(--ink); padding-inline: 0.1em; }
+.htvf-sub {
+  color: var(--paper); margin-top: 1rem; max-width: 36ch; text-wrap: pretty;
+  font-size: var(--step-1); line-height: 1.45; font-weight: 500;
+}
+
+/* From 1024px: find it fast. The heading sets on two lines with the
+   highlight as one band, the sub-line on two, and the photo is framed to the
+   right of the copy — the copy on solid ink, a short fade at the photo's left
+   edge — so every face in it reads and the box sits high on a laptop. */
+@media (min-width: 1024px) {
+  .htvf-banner-inner {
+    min-height: clamp(520px, 70vh, 680px);
+    padding-block: clamp(1.75rem, 4.6vh, 3.25rem);
+    gap: clamp(1.1rem, 2.6vh, 1.6rem);
+  }
+  .htvf-banner-media { left: calc(50% - min(4vw, 3.5rem)); }
+  .htvf-banner-img { object-position: 30% 40%; }
+  .htvf-banner-scrim {
+    background:
+      linear-gradient(90deg, var(--ink) 0, rgb(28 43 41 / 82%) 2.5rem, rgb(28 43 41 / 30%) 5rem, rgb(28 43 41 / 0%) 7.5rem),
+      linear-gradient(to top, rgb(28 43 41 / 55%) 0%, transparent 32%);
+  }
+  .htvf-banner-copy { max-width: 48rem; }
+  .htvf-h1 { max-width: 20ch; font-size: clamp(2.6rem, 1rem + 3.3vw, 3.5rem); margin-top: 0.6rem; }
+  .htvf-h1 .hl { white-space: nowrap; }
+  .htvf-sub { max-width: 34ch; margin-top: 0.8rem; }
+  .htvf-banner--nophoto .htvf-banner-inner { min-height: 0; }
+}
+/* 1024–1199px: the wrap is full width, so the one-line kicker would run onto
+   the photo — it stacks at its dot instead. */
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .htvf-kicker-part { display: block; }
+  .htvf-kicker-part + .htvf-kicker-part { margin-top: 0.35rem; }
+  .htvf-kicker-dot { display: none; }
+}
+
+/* The search panel — opaque paper, the framed-panel signature. */
+.htvf-search {
+  position: relative; z-index: 3; max-width: 38rem;
+  background: var(--paper); color: var(--ink);
+  border: 2px solid var(--ink); border-radius: 16px;
+  box-shadow: 6px 6px 0 var(--yellow), 0 22px 50px rgb(0 0 0 / 30%);
+  padding: clamp(1rem, 2.4vw, 1.4rem);
+}
+.htvf-label {
+  display: block; font-family: var(--font-display); font-weight: 800;
+  font-size: var(--step-1); line-height: 1.15;
+}
+.htvf-hint { color: var(--ink-soft); font-size: 0.92rem; margin-top: 0.15rem; }
+.htvf-row { display: flex; gap: 0.6rem; margin-top: 0.75rem; align-items: stretch; }
+.htvf-combo { position: relative; flex: 1 1 auto; min-width: 0; }
+.htvf-input {
+  width: 100%; min-height: 3.4rem; padding: 0.7rem 1rem;
+  font: 600 1.15rem/1.2 var(--font-body); color: var(--ink);
+  background: #fff; border: 2px solid var(--ink); border-radius: 10px;
+}
+.htvf-input::placeholder { color: var(--ink-soft); font-weight: 400; opacity: 1; }
+.htvf-input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.htvf-search .htvf-go { min-height: 3.4rem; padding-inline: 1.5rem; font-size: 1.05rem; flex: none; }
+.htvf-banner .htvf-go { box-shadow: 3px 3px 0 var(--ink); }
+.htvf-noscript { margin-top: 0.7rem; font-size: 0.95rem; font-weight: 600; max-width: none; }
+.htvf-noscript a { color: var(--teal-deep); }
+
+.htvf-list {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 40;
+  margin: 0; padding: 0.3rem; list-style: none;
+  background: #fff; border: 2px solid var(--ink); border-radius: 10px;
+  box-shadow: 4px 4px 0 var(--ink), 0 18px 40px rgb(28 43 41 / 22%);
+  max-height: min(23rem, 58vh); overflow-y: auto; overscroll-behavior: contain;
+}
+.htvf-opt {
+  display: grid; gap: 0.05rem; padding: 0.55rem 0.75rem; border-radius: 7px; cursor: pointer;
+  max-width: none;
+}
+.htvf-opt[aria-selected='true'], .htvf-opt:hover { background: var(--yellow-soft); }
+.htvf-opt[aria-selected='true'] { box-shadow: inset 4px 0 0 var(--ink); }
+.htvf-opt-name { font-weight: 700; color: var(--ink); }
+.htvf-opt-cap { padding: 0.45rem 0.75rem 0.5rem; font-size: 0.88rem; font-weight: 700; color: var(--ink); border-bottom: 1px solid var(--line); margin-bottom: 0.25rem; max-width: none; }
+.htvf-opt-meta { font-size: 0.85rem; color: var(--ink-soft); }
+
+.htvf-status { margin: 0.6rem 0 0; font-weight: 600; font-size: 0.95rem; max-width: none; }
+.htvf-status:empty { margin: 0; }
+.htvf-status a, .htvf-alt a, .htvf-chooser-vec a, .htvf-basis a { color: var(--teal-deep); font-weight: 650; }
+.htvf-alt { margin-top: 0.8rem; font-size: 0.92rem; display: flex; flex-wrap: wrap; gap: 0.25rem 0.6rem; max-width: none; }
+.htvf-alt-dot { color: var(--ink-soft); }
+/* The chooser carries its own VEC link; one is enough while it shows. */
+.htvf-chooser:not([hidden]) ~ .htvf-alt .htvf-alt-vec,
+.htvf-chooser:not([hidden]) ~ .htvf-alt .htvf-alt-dot { display: none; }
+
+/* The split chooser — inside the panel, right under the box. */
+.htvf-chooser { margin-top: 0.95rem; padding-top: 0.95rem; border-top: 2px dashed var(--line); }
+.htvf-chooser-q { font-family: var(--font-display); font-weight: 700; font-size: 1.12rem; line-height: 1.25; max-width: none; text-wrap: balance; }
+.htvf-chooser-q:focus { outline: none; }
+.htvf-chooser-opts { display: grid; gap: 0.6rem; margin-top: 0.75rem; }
+.htvf-choice {
+  display: grid; gap: 0.12rem; width: 100%; text-align: left; cursor: pointer; text-decoration: none;
+  padding: 0.75rem 0.95rem; font: inherit; color: var(--ink);
+  background: #fff; border: 2px solid var(--ink); border-radius: 10px;
+  box-shadow: 3px 3px 0 var(--ink);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+}
+.htvf-choice:hover { background: var(--yellow-soft); color: var(--ink); }
+.htvf-choice:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.htvf-choice:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.htvf-choice-name { font-family: var(--font-display); font-weight: 800; font-size: 1.08rem; }
+.htvf-choice-meta { font-size: 0.86rem; font-weight: 650; color: var(--teal-deep); }
+.htvf-choice-subs { font-size: 0.86rem; color: var(--ink-soft); }
+.htvf-chooser-note { margin-top: 0.7rem; font-size: 0.9rem; color: var(--ink-soft); max-width: none; }
+.htvf-chooser-vec { margin-top: 0.7rem; font-size: 0.92rem; max-width: none; }
+
+/* Phones: a cinematic strip of the photo on top, the copy below it on ink. */
+@media (max-width: 899px) {
+  .htvf-banner-media { bottom: auto; height: var(--htvf-photo-h); }
+  .htvf-banner { --htvf-photo-h: clamp(190px, 58vw, 380px); }
+  .htvf-banner-img { object-position: 50% 44%; }
+  .htvf-banner-scrim {
+    background: linear-gradient(to bottom,
+      rgb(28 43 41 / 10%) 0%,
+      rgb(28 43 41 / 12%) 38%,
+      rgb(28 43 41 / 72%) 72%,
+      rgb(28 43 41 / 96%) 92%,
+      var(--ink) 100%);
+  }
+  .htvf-banner-inner {
+    min-height: 0; align-content: start;
+    padding-top: calc(var(--htvf-photo-h) - 2.6rem);
+    padding-bottom: 1.75rem;
+  }
+  .htvf-banner--nophoto .htvf-banner-inner { padding-top: 2rem; }
+  .htvf-h1 { max-width: 16ch; }
+  .htvf-kicker-part { display: block; }
+  .htvf-kicker-dot { display: none; }
+  .htvf-kicker::before { display: block; margin: 0 0 0.55rem; }
+  .htvf-alt { display: grid; gap: 0.35rem; }
+  .htvf-alt-dot { display: none; }
+}
+@media (max-width: 420px) {
+  .htvf-banner { --htvf-photo-h: clamp(160px, 50vw, 210px); }
+  .htvf-h1 { font-size: clamp(2rem, 9.4vw, 2.5rem); }
+  .htvf-sub { font-size: 1.05rem; }
+  .htvf-search .htvf-go { padding-inline: 1.1rem; }
+}
+@media (max-width: 359px) {
+  .htvf-row { flex-wrap: wrap; }
+  .htvf-combo { flex-basis: 100%; }
+  .htvf-search .htvf-go { width: 100%; min-height: 3rem; }
+}
+@media (max-width: 899px) and (max-height: 640px) {
+  .htvf-banner { --htvf-photo-h: 132px; }
+  .htvf-kicker { font-size: 0.72rem; }
+  .htvf-sub { margin-top: 0.6rem; }
+}
+
+/* The settle: a slow pull-back on the photo, motion visitors only. */
+@keyframes htvf-settle { from { transform: scale(1.07); } to { transform: none; } }
+html.js-motion .htvf-banner-img { animation: htvf-settle 1.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  html.js-motion .htvf-banner-img { animation: none; }
+}
+
+/* ------------------------------------------------------------ result
+   A district or region page's top: the breadcrumb, the <h1> and its intro,
+   the tools (Print / Share / Find another district, the VEC note), then the
+   papers. From 980px the grid sets the tools beside the heading. */
+.htvf-result {
+  /* No scroll-margin: html's scroll-padding-top (global.css) already clears
+     the sticky header. */
+  padding-block: clamp(2rem, 5vw, 3.75rem) clamp(2.5rem, 6vw, 4.5rem);
+  background: var(--paper);
+}
+.htvf-print-mast, .htvf-print-note, .htvf-print-only { display: none; }
+/* Print-only: the "own use" line and the site's authorisation line at the foot
+   of EACH printed sheet when the result prints as cards (one A4 per card) —
+   every separable sheet of printed electoral material carries the
+   authorisation. Never shown on screen, where the footer's line and the one
+   under each illustration's caption (.htvf-cap-auth, below) are the ones. */
+.htvf-sheet-legal { display: none; }
+.htvf-result-grid { display: grid; grid-template-columns: minmax(0, 1fr); }
+.htvf-result-head {
+  position: relative; padding-bottom: 1.2rem; border-bottom: 3px solid var(--ink);
+}
+.htvf-result-head::after {
+  content: ''; position: absolute; left: 0; bottom: -3px; width: 96px; height: 3px; background: var(--yellow);
+}
+.htvf-result .htvf-result-eyebrow { margin-bottom: 0.35rem; }
+.htvf-crumbs ol {
+  list-style: none; margin: 0 0 1rem; padding: 0;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.55rem; font-size: 0.92rem;
+}
+.htvf-crumbs li { display: inline-flex; align-items: center; gap: 0.55rem; max-width: none; }
+.htvf-crumbs li + li::before {
+  content: ''; width: 0.42rem; height: 0.42rem; flex: none;
+  border: solid var(--ink-soft); border-width: 2px 2px 0 0; transform: rotate(45deg);
+}
+.htvf-crumbs a { color: var(--teal-deep); font-weight: 650; }
+.htvf-crumbs [aria-current] { color: var(--ink-soft); font-weight: 600; }
+.htvf-result-h { font-size: clamp(2.2rem, 1.5rem + 3vw, 3.8rem); line-height: 1; letter-spacing: -0.02em; }
+/* Focus lands here by script (the result is announced from its heading); it
+   is not a control, so it carries no focus ring of its own. */
+.htvf-result-h:focus, .htvf-result-h:focus-visible { outline: none; }
+.htvf-result-region { font-size: var(--step-1); line-height: 1.4; margin-top: 0.7rem; max-width: 60ch; text-wrap: pretty; }
+.htvf-result-tools { margin-top: clamp(1.5rem, 3.5vw, 2.25rem); display: grid; gap: 0.9rem; }
+.htvf-result-aside {
+  padding: 0.9rem 1.1rem; background: var(--sand); border-left: 5px solid var(--yellow); border-radius: 0 12px 12px 0;
+}
+.htvf-basis { color: var(--ink-soft); font-size: 0.95rem; margin-top: 0; max-width: 70ch; }
+.htvf-basis-note { color: var(--ink-soft); font-size: 0.92rem; margin-top: 0.35rem; max-width: 70ch; }
+/* A region page reached by the search's one-region shortcut (#from=…): why
+   this page and not a district’s — the aside’s sand panel, under the heading.
+   Screen only: the printed sheets are the card's. */
+.htvf-from {
+  margin-top: 1rem; max-width: 64ch; padding: 0.9rem 1.1rem;
+  background: var(--sand); border-left: 5px solid var(--yellow); border-radius: 0 12px 12px 0;
+}
+.htvf-from-lead { margin: 0; max-width: none; text-wrap: pretty; }
+.htvf-from-papers { margin: 0.55rem 0 0; padding: 0; list-style: none; display: grid; gap: 0.35rem; font-size: 0.95rem; }
+.htvf-from-papers li { max-width: none; text-wrap: pretty; }
+@media print { .htvf-from { display: none !important; } }
+.htvf-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.htvf-lbl-short { display: none; }
+.htvf-share-status { font-size: 0.92rem; font-weight: 600; color: var(--teal-deep); }
+.htvf-share-status:empty { display: none; }
+@media (min-width: 980px) {
+  .htvf-result-grid {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    grid-template-areas: 'head tools' 'la la' 'lc lc' 'close close';
+    align-items: end;
+  }
+  .htvf-result-head { grid-area: head; }
+  .htvf-result-tools {
+    grid-area: tools; margin-top: 0; padding: 0 0 1.2rem 3rem; border-bottom: 3px solid var(--ink);
+    align-self: stretch; align-content: end;
+  }
+  .htvf-step--la { grid-area: la; }
+  .htvf-step--lc { grid-area: lc; }
+  .htvf-closing { grid-area: close; }
+  /* The tools are drawn in their DOM order (the buttons, their status, the
+     VEC note), so the focus order and the visual order agree (WCAG 2.4.3). */
+}
+/* Phones and tablets: the three actions on one row, short labels. */
+@media (max-width: 979px) {
+  .htvf-actions { flex-wrap: nowrap; }
+  .htvf-actions .btn { flex: 1 1 0; min-width: 0; padding-inline: 0.6rem; justify-content: center; }
+  .htvf-lbl-long { display: none; }
+  .htvf-lbl-short { display: inline; }
+}
+
+.htvf-step {
+  display: grid; gap: clamp(1.25rem, 3vw, 2.25rem);
+  margin-top: clamp(1.5rem, 3.5vw, 2.25rem);
+  padding: clamp(1.1rem, 3vw, 2rem);
+  background: #fff; border: 2px solid var(--ink); border-radius: 18px;
+  box-shadow: 7px 7px 0 var(--yellow);
+}
+@media (min-width: 980px) {
+  .htvf-step { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  .htvf-step:has(.htvf-figure--wide) { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); }
+  /* The paper stays beside the words while a long column of them scrolls. */
+  .htvf-figure { position: sticky; top: 5.75rem; }
+}
+/* Below 980px: each paper's illustration comes BEFORE its instructions —
+   the words' column dissolves (display: contents) and its parts take their
+   places around the figure: who and what (1), the paper (2), how (3). */
+@media (max-width: 979px) {
+  .htvf-step { gap: 0; }
+  .htvf-step-copy { display: contents; }
+  .htvf-o1 { order: 1; }
+  .htvf-o2 { order: 2; margin-top: 1.1rem; }
+  .htvf-o3 { order: 3; }
+  .htvf-step-kicker.htvf-o1 { margin-top: 0; }
+}
+.htvf-step-kicker {
+  font-family: var(--font-body); line-height: 1.3;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.55rem;
+  font-size: 0.78rem; font-weight: 750; letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal-deep);
+  max-width: none; text-wrap: balance;
+}
+.htvf-step-tag {
+  display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px;
+  background: var(--ink); color: var(--paper); letter-spacing: 0.08em;
+}
+@media (max-width: 419px) { .htvf-kick-sfx { display: none; } }
+.htvf-step-h { font-size: clamp(1.7rem, 1.3rem + 1.6vw, 2.5rem); margin-top: 0.5rem; line-height: 1.05; }
+.htvf-step-sub { color: var(--ink-soft); margin-top: 0.3rem; font-size: 0.98rem; }
+.htvf-step-note {
+  margin-top: 1rem; padding: 0.6rem 0.85rem; border-radius: 10px;
+  background: var(--sand); font-weight: 600;
+}
+
+/* Instructions: an ordered list with a ruled spine — no numerals as markers,
+   so no number on the page looks like a ballot mark it is not (C8). */
+.htvf-steps { list-style: none; margin: 1.1rem 0 0; padding: 0; display: grid; gap: 0.7rem; }
+.htvf-steps li {
+  position: relative; padding-left: 1.9rem; font-size: 1.04rem; line-height: 1.5; max-width: 60ch;
+}
+.htvf-steps li::before {
+  content: ''; position: absolute; left: 0.2rem; top: 0.42em;
+  width: 0.8rem; height: 0.8rem; border-radius: 50%;
+  background: #fff; border: 2.5px solid var(--ink);
+}
+.htvf-steps li:not(:last-child)::after {
+  content: ''; position: absolute; left: calc(0.2rem + 0.4rem - 1px); top: calc(0.42em + 0.8rem);
+  bottom: calc(-0.7rem - 0.42em); width: 2px; background: var(--line);
+}
+ol.htvf-steps li:first-child { font-weight: 700; }
+ol.htvf-steps li:first-child::before { background: var(--yellow); }
+.htvf-steps--plain li::after { display: none; }
+
+.htvf-way {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
+  margin-top: 1.4rem; font-size: 1.12rem;
+}
+.htvf-way-badge {
+  font-family: var(--font-body); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 0.15rem 0.55rem; border-radius: 999px;
+  background: var(--yellow); color: var(--ink); border: 1.5px solid var(--ink);
+}
+.htvf-either {
+  margin-top: 1.1rem; padding: 0.65rem 0.9rem; font-weight: 700;
+  background: var(--sand); border-left: 5px solid var(--yellow); border-radius: 0 10px 10px 0;
+}
+
+/* Our candidate (Assembly) and our team (Council). */
+.htvf-person {
+  display: flex; align-items: center; gap: 0.9rem; margin-top: 1.1rem;
+  padding: 0.7rem 1rem 0.7rem 0.7rem; background: var(--sand); border-radius: 14px; width: fit-content; max-width: 100%;
+}
+.htvf-person img, .htvf-person-ph {
+  width: 4.5rem; height: 4.5rem; flex: none; border-radius: 50%;
+  border: 2px solid var(--ink); object-fit: cover; object-position: 50% 18%; background: #fff;
+}
+.htvf-person-ph, .htvf-team .htvf-person-ph {
+  display: grid; place-items: center; font-family: var(--font-display); font-weight: 800; color: var(--ink);
+  background: var(--yellow-soft);
+}
+.htvf-person-role { font-size: 0.75rem; font-weight: 750; letter-spacing: 0.08em; text-transform: uppercase; color: var(--teal-deep); }
+.htvf-person-name { font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; line-height: 1.15; }
+.htvf-person-link { font-weight: 650; font-size: 0.95rem; }
+.htvf-person-link::after { content: ' →'; }
+.htvf-person-place { color: var(--ink-soft); font-size: 0.92rem; }
+
+.htvf-team { list-style: none; margin: 1.1rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.htvf-team-link {
+  display: flex; align-items: center; gap: 0.65rem;
+  padding: 0.45rem 0.95rem 0.45rem 0.45rem; border-radius: 999px;
+  background: var(--sand); color: var(--ink); text-decoration: none;
+  border: 1.5px solid transparent;
+}
+a.htvf-team-link:hover { border-color: var(--ink); background: var(--yellow-soft); color: var(--ink); }
+.htvf-team img, .htvf-team .htvf-person-ph {
+  width: 3rem; height: 3rem; flex: none; border-radius: 50%;
+  border: 2px solid var(--ink); object-fit: cover; object-position: 50% 18%; font-size: 0.9rem;
+}
+.htvf-team-txt { display: grid; line-height: 1.2; }
+.htvf-team-txt b { font-size: 0.98rem; }
+.htvf-team-txt span { font-size: 0.8rem; color: var(--ink-soft); }
+
+/* ------------------------------------------------------- illustrations */
+.htvf-figure { margin: 0; min-width: 0; }
+.htvf-figure figcaption {
+  margin-top: 0.6rem; text-align: center; font-size: 0.8rem; font-style: italic; color: var(--ink-soft);
+}
+/* Every illustration's caption, with the site's authorisation line directly
+   under it (src/components/htv/HtvCaption.astro — the owner, 2026-11-16): the
+   plain schematics here, the ballot-paper replicas (htv-ballot.css sets their
+   caption) and the registered cards' foot (.htvc-foot-cap, below). The line
+   takes the caption's own size and colour — ink-soft on white 8.2:1, on sand
+   7.2:1; paper on the card foot's teal-ink 9.9:1 — upright, so its 147
+   characters stay easy to read. SCREEN ONLY: every printed sheet already
+   carries its one authorisation line (.htvf-sheet-legal, or the footer's), so
+   this copy never prints. */
+.htvf-cap-t, .htvf-cap-auth { display: block; }
+.htvf-cap-auth {
+  max-width: 62ch; margin: 0.2rem auto 0;
+  font-style: normal; line-height: 1.45; text-wrap: balance;
+}
+@media print { .htvf-cap-auth { display: none !important; } }
+.htvf-paper {
+  background: #fff; color: var(--ink);
+  border: 1.5px solid var(--ink); border-radius: 6px;
+  padding: clamp(0.75rem, 2vw, 1.1rem);
+  box-shadow: 0 1px 0 var(--line), 0 16px 34px rgb(28 43 41 / 12%);
+  font-size: 0.82rem; line-height: 1.3;
+}
+.htvf-paper-head {
+  display: grid; justify-items: center; text-align: center; gap: 0.1rem;
+  padding-bottom: 0.55rem; margin-bottom: 0.7rem; border-bottom: 1.5px solid var(--ink);
+  font-size: 0.68rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; max-width: none;
+}
+.htvf-paper-head span + span {
+  font-family: var(--font-display); font-size: 1rem; letter-spacing: 0; text-transform: none;
+}
+.htvf-box {
+  display: inline-grid; place-items: center; flex: none;
+  width: 2.15rem; height: 2.15rem; border-radius: 3px;
+  background: #fff; border: 2px solid var(--ink);
+  font-family: var(--font-display); font-weight: 800; font-size: 1.4rem; line-height: 1; color: var(--ink);
+}
+.htvf-box.is-ours { background: var(--yellow); box-shadow: 2px 2px 0 var(--ink); }
+.htvf-party {
+  display: block; font-size: 0.64rem; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-soft);
+}
+.htvf-skel { display: grid; gap: 0.3rem; flex: 1 1 auto; min-width: 0; }
+.htvf-skel i { display: block; height: 0.5rem; width: 72%; border-radius: 4px; background: var(--line); }
+.htvf-skel i + i { width: 46%; height: 0.38rem; }
+
+/* Assembly: our row, then the rest under a brace. */
+.htvf-la-row { display: flex; align-items: center; gap: 0.7rem; padding: 0.45rem 0.55rem; max-width: none; }
+.htvf-la-row.is-ours { background: var(--yellow-soft); border-radius: 6px; margin-bottom: 0.25rem; }
+.htvf-la-name b { display: block; font-size: 0.95rem; letter-spacing: 0.02em; overflow-wrap: anywhere; }
+.htvf-la-row.is-ours .htvf-party { color: var(--ink); }
+.htvf-la-rest { display: grid; grid-template-columns: minmax(0, 1fr) minmax(5.5rem, 9rem); gap: 0.4rem; align-items: stretch; }
+.htvf-la-rows { display: grid; gap: 0.1rem; }
+.htvf-brace { font-size: 0.76rem; font-weight: 750; line-height: 1.25; color: var(--teal-deep); max-width: none; }
+.htvf-brace--side { position: relative; display: grid; align-items: center; padding: 0.3rem 0 0.3rem 1rem; }
+.htvf-brace--side::before {
+  content: ''; position: absolute; left: 0; top: 0.5rem; bottom: 0.5rem; width: 0.55rem;
+  border: 2px solid var(--teal-deep); border-left: 0; border-radius: 0 9px 9px 0;
+}
+.htvf-paper-foot { margin-top: 0.75rem; text-align: center; font-size: 0.74rem; color: var(--ink-soft); max-width: none; text-wrap: balance; }
+
+/* Council: above the line, the thick line, below the line. */
+.htvf-lc-label {
+  margin: 0.15rem 0 0.4rem; font-size: 0.66rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--ink-soft); max-width: none;
+}
+.htvf-lc-atl { display: grid; grid-template-columns: minmax(4.6rem, 6.2rem) minmax(0, 1fr); gap: 0.45rem; align-items: end; }
+.htvf-lc-atl--none { grid-template-columns: minmax(0, 1fr); }
+.htvf-lc-col { display: grid; justify-items: center; align-content: start; gap: 0.35rem; text-align: center; padding: 0.4rem 0.2rem; min-width: 0; }
+.htvf-lc-col.is-ours { background: var(--yellow-soft); border-radius: 6px; padding: 0.5rem 0.3rem; }
+.htvf-lc-col.is-ours .htvf-party { color: var(--ink); font-size: 0.6rem; line-height: 1.2; }
+.htvf-col-letter { font-family: var(--font-display); font-weight: 800; font-size: 0.95rem; line-height: 1; }
+.htvf-lc-col .htvf-skel { width: 100%; justify-items: center; }
+.htvf-lc-col .htvf-skel i { width: 78%; }
+.htvf-lc-cols { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.15rem; }
+.htvf-lc-atl--none .htvf-lc-cols { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.htvf-brace--top { position: relative; text-align: center; padding: 0 0.3rem 0.75rem; margin-bottom: 0.1rem; }
+.htvf-brace--top::after {
+  content: ''; position: absolute; left: 0.45rem; right: 0.45rem; bottom: 0; height: 0.55rem;
+  border: 2px solid var(--teal-deep); border-bottom: 0; border-radius: 9px 9px 0 0;
+}
+.htvf-lc-line { margin: 1.05rem 0 0.55rem; border-top: 4px solid var(--ink); text-align: center; max-width: none; line-height: 1.2; }
+.htvf-lc-line > span {
+  position: relative; top: -0.72rem; display: inline-block; max-width: 92%;
+  padding: 0 0.5rem; background: #fff;
+  font-size: 0.66rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.htvf-ll-short { display: none; }
+@media (max-width: 419px) {
+  .htvf-ll-long { display: none; }
+  .htvf-ll-short { display: inline; }
+}
+.htvf-lc-btl { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1fr); gap: 0.4rem; }
+.htvf-lc-btlcol { display: grid; gap: 0.4rem; align-content: start; padding: 0.45rem; min-width: 0; }
+.htvf-lc-btlcol.is-ours { background: var(--yellow-soft); border-radius: 6px; }
+.htvf-lc-btlcol.is-ours .htvf-party { color: var(--ink); }
+.htvf-lc-btlcol > .htvf-skel i { width: 64%; }
+.htvf-lc-cand { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
+.htvf-lc-cand .htvf-box { width: 1.45rem; height: 1.45rem; border-width: 1.5px; font-size: 0.95rem; }
+/* Below the line, the 1 for our lead: a real recommended mark, so it shows —
+   lighter than our 1 above the line (no fill, no offset shadow). */
+.htvf-lc-cand .htvf-box.is-lead { background: #fff; box-shadow: none; border-width: 2px; }
+.htvf-lc-cand-name { font-size: 0.7rem; font-weight: 750; overflow-wrap: anywhere; }
+@media (max-width: 560px) {
+  .htvf-lc-col--x { display: none; }
+  .htvf-lc-cols { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .htvf-lc-atl--none .htvf-lc-cols { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .htvf-lc-btl { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
+  .htvf-box { width: 1.95rem; height: 1.95rem; font-size: 1.25rem; }
+}
+
+.htvf-closing {
+  margin-top: clamp(1.5rem, 3vw, 2.25rem); padding-top: 1rem; border-top: 1px solid var(--line);
+  color: var(--ink-soft); font-size: 0.95rem; max-width: 72ch;
+}
+
+/* ------------------------------------------------------------ the cards
+   The party's REGISTERED how-to-vote cards (ADR-43 rider C), translated into
+   the canon rather than copied: the card's teal ground is --teal with INK
+   type (5.0:1 — white on teal would be 2.8:1); its yellow "CHANGE POLITICS"
+   becomes ink on teal (yellow is never text); its "TOGETHER" brush is the
+   .hl sweep; its name labels are paper on --teal-ink (9.9:1); the instruction
+   band is yellow with ink type; the photos are framed (ink border, yellow
+   offset shadow), not cut out. Bricolage + Public Sans only — the card's
+   handwritten 1 is a display-type 1 in --teal-deep on white (5.9:1).
+   LAYOUT: one column below 700px — photo and name, the band, the paper, the
+   ticked points — and the card's own two-column layout from 700px (a laptop,
+   a phone held sideways) and in print. Every block is a grid area of .htvc,
+   so the order changes without moving markup. */
+.htvc-set { margin-top: clamp(1.5rem, 3.5vw, 2.25rem); }
+.htvc-kicker {
+  font-family: var(--font-body); line-height: 1.3;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.55rem; margin-bottom: 0.75rem;
+  font-size: 0.78rem; font-weight: 750; letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal-deep);
+  max-width: none;
+}
+.htvc {
+  --htvc-pad: clamp(0.9rem, 2.4vw, 1.6rem);
+  position: relative; isolation: isolate;
+  display: grid; grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'mast' 'who' 'slogan' 'band' 'panel' 'points' 'foot';
+  background: var(--teal); color: var(--ink);
+  border: 2px solid var(--ink); border-radius: 18px; overflow: hidden;
+  box-shadow: 7px 7px 0 var(--ink);
+}
+.htvc p, .htvc li { max-width: none; }
+.htvc-mast { grid-area: mast; padding: var(--htvc-pad) var(--htvc-pad) calc(var(--htvc-pad) * 0.6); }
+.htvc-wordmark { display: block; width: min(100%, 46rem); height: auto; }
+
+/* Who: the framed photo(s), each with its name label, then the seat. */
+.htvc-who { grid-area: who; display: flex; flex-direction: column; padding: 0 var(--htvc-pad); min-width: 0; }
+.htvc-photos { display: flex; gap: clamp(0.6rem, 1.6vw, 1rem); flex: 1 1 auto; min-height: 0; }
+.htvc-person { position: relative; flex: 1 1 0; min-width: 0; margin: 0; display: flex; flex-direction: column; }
+.htvc-frame {
+  position: relative; flex: 1 1 auto; min-height: 15rem; aspect-ratio: 5 / 4;
+  border: 2px solid var(--ink); border-radius: var(--radius); overflow: hidden;
+  background: var(--yellow-soft); box-shadow: 6px 6px 0 var(--yellow);
+}
+.htvc--lc .htvc-frame { aspect-ratio: 4 / 5; min-height: 13rem; }
+/* The team's photos are often taken further back than a headshot: a little
+   closer in, so faces read at the card's scale (the photo, never redrawn). */
+.htvc--lc .htvc-frame img { transform: scale(1.26); transform-origin: 50% 18%; }
+.htvc-frame img {
+  position: absolute; inset: 0; width: 100%; height: 100%; max-width: none;
+  object-fit: cover; object-position: 50% 18%;
+}
+.htvc-initials {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-family: var(--font-display); font-weight: 800; font-size: clamp(2.4rem, 7vw, 4rem); color: var(--ink);
+}
+/* The name label sits over the photo's lower edge, as on the card. */
+.htvc-name { position: absolute; left: -2px; bottom: 0.9rem; z-index: 1; max-width: calc(100% - 0.5rem); }
+.htvc-name-in {
+  display: inline-grid; padding: 0.35rem 0.85rem 0.45rem 0.8rem;
+  background: var(--teal-ink); color: var(--paper); text-decoration: none;
+  font-family: var(--font-display); font-weight: 800; text-transform: uppercase; line-height: 0.95;
+  border-radius: 0 6px 6px 0; box-shadow: 3px 3px 0 var(--ink);
+}
+a.htvc-name-in:hover { color: var(--paper); text-decoration: underline; text-decoration-thickness: 2px; }
+/* The focus ring sits INSIDE the label, yellow on teal-ink (the card's
+   overflow would clip a ring outside it, and yellow over a light photo would
+   barely show), with an ink ring round the label as well. */
+a.htvc-name-in:focus-visible { outline: 3px solid var(--yellow); outline-offset: -4px; box-shadow: 0 0 0 3px var(--ink), 3px 3px 0 var(--ink); }
+.htvc-name-g { font-size: clamp(0.85rem, 1.6vw, 1.05rem); letter-spacing: 0.02em; }
+.htvc-name-s { font-size: clamp(1.45rem, 3.4vw, 2.4rem); letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.htvc--lc .htvc-name-s { font-size: clamp(1.15rem, 2.4vw, 1.75rem); }
+/* The campaign CUT-OUT (Keystatic → How to Vote page → "Card photos"): the
+   figure(s) stand on the teal ground, bottom-aligned, the HTML name labels
+   over the lowest part of the picture — the chest, never a face — and the
+   seat label in its own row UNDER the picture, at every width and on paper
+   (the cut-outs are cropped at chest height, so a label any higher would sit
+   across a mouth; the regression suite holds every label's top in the
+   picture's lowest 28%). The picture has no text in it; all of this is HTML. */
+.htvc .htvc-who--cut {
+  display: grid; grid-template-areas: 'stack' 'seat'; grid-template-rows: auto auto;
+  align-items: end; justify-items: stretch;
+  padding: 0; position: relative; overflow: hidden;
+}
+.htvc-who--cut > * { grid-area: stack; min-width: 0; }
+.htvc-cut-img {
+  align-self: end; justify-self: center; display: block;
+  width: 100%; height: auto; max-width: none;
+}
+.htvc-who--cut .htvc-cut-labels { display: contents; }
+.htvc-who--cut .htvc-cut-names { grid-area: stack; align-self: end; position: relative; z-index: 1; padding: 0 0.6rem 0.55rem 0; }
+.htvc .htvc-who--cut .htvc-seat { grid-area: seat; justify-self: start; margin: -0.3rem 0 0.9rem 0.6rem; }
+.htvc-cut-names { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(0.4rem, 1.4vw, 0.9rem); width: 100%; margin: 0; max-width: none; }
+.htvc-cut-names[data-count='2'] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.htvc-cut-names[data-count='3'] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.htvc-cut-names .htvc-name { position: relative; left: -2px; bottom: auto; justify-self: start; max-width: 100%; display: flex; }
+.htvc-cut-names .htvc-name + .htvc-name { left: 0; }
+.htvc .htvc-who--lc .htvc-seat { margin-left: clamp(0.4rem, 1.6vw, 1rem); margin-right: 0; align-self: auto; }
+/* A surname is never broken mid-word (it comes already in capitals, with a
+   Mc / Mac prefix kept as the card prints it: McKENZIE). */
+.htvc-who--cut .htvc-name-s { overflow-wrap: normal; word-break: normal; hyphens: manual; }
+.htvc-name-s { text-transform: none; }
+/* A team's labels are shorter than one person's: the surnames sit smaller. */
+.htvc-who--lc .htvc-name-s { font-size: clamp(1.05rem, 2.2vw, 1.6rem); }
+
+.htvc-seat {
+  position: relative; z-index: 2; align-self: flex-start;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.15rem 0.85rem;
+  margin: -0.35rem 0 0 clamp(0.6rem, 3vw, 2rem); padding: 0.55rem 1rem 0.6rem;
+  background: #fff; color: var(--ink); border: 2px solid var(--ink); border-radius: 6px;
+  font-family: var(--font-display); font-weight: 800; text-transform: uppercase; line-height: 1;
+}
+.htvc-seat-place { font-size: clamp(1.7rem, 3.6vw, 2.75rem); letter-spacing: -0.01em; }
+.htvc-seat-house { color: var(--teal-deep); font-size: clamp(0.72rem, 1.2vw, 0.9rem); letter-spacing: 0.03em; line-height: 1.15; max-width: 15ch; }
+.htvc-seat--lc { flex-direction: column; align-items: flex-start; gap: 0.2rem; margin-left: 0; margin-right: 0; align-self: stretch; }
+.htvc-seat--lc .htvc-seat-house { color: var(--ink); font-size: clamp(0.9rem, 1.6vw, 1.15rem); max-width: none; }
+.htvc-seat--lc .htvc-seat-place { color: var(--teal-deep); font-size: clamp(1.05rem, 2vw, 1.45rem); letter-spacing: 0.01em; }
+
+/* "CHANGE POLITICS / together" — ink on teal, and the highlighter. */
+.htvc-slogan {
+  grid-area: slogan; display: grid; justify-items: center; text-align: center; gap: 0.15rem;
+  padding: clamp(1rem, 2.4vw, 1.4rem) var(--htvc-pad) 0;
+  font-family: var(--font-display); font-weight: 800; text-transform: uppercase; line-height: 1;
+}
+.htvc-slogan-a { font-size: clamp(2rem, 4.6vw, 3.6rem); letter-spacing: -0.015em; }
+.htvc-slogan-b { font-size: clamp(1.6rem, 3.4vw, 2.75rem); letter-spacing: 0.01em; }
+.htvc-slogan-b .hl { color: var(--ink); padding: 0.02em 0.35em 0.06em; }
+/* The cards are cloned in after effects.js has looked for .hl sweeps to draw
+   in, so theirs is painted at full size (on screen and on paper). */
+.js-motion .htvc .hl, .htvc .hl { background-size: 100.5% 100%; transition: none; }
+.htvc-slogan--lc .htvc-slogan-a { font-size: clamp(1.9rem, 3.5vw, 2.85rem); }
+.htvc-slogan--lc .htvc-slogan-b { font-size: clamp(1.55rem, 2.8vw, 2.25rem); }
+/* (.htvc-scoped: .htvf-ticks, which these reuse, is defined later.) */
+.htvc .htvc-points { grid-area: points; align-self: center; margin: 0; padding: clamp(1rem, 2.4vw, 1.4rem) var(--htvc-pad); gap: 0.75rem; }
+.htvc .htvc-points li { font-family: var(--font-display); font-weight: 650; font-size: clamp(1.02rem, 1.7vw, 1.3rem); line-height: 1.2; padding-left: 2.6rem; text-wrap: balance; }
+.htvc .htvc-points li::before { width: 1.85rem; height: 1.85rem; top: -0.05em; background: var(--yellow); border: 2px solid var(--ink); }
+.htvc .htvc-points li::after { left: 0.66rem; top: 0.22em; width: 0.45rem; height: 0.85rem; border-width: 0 3px 3px 0; }
+
+/* The instruction band — the registered lines, yellow with ink type. */
+.htvc-band {
+  grid-area: band; position: relative;
+  padding: clamp(1rem, 2.6vw, 1.6rem) var(--htvc-pad);
+  background: var(--yellow); color: var(--ink);
+}
+.htvc-ins { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.45rem, 3vw, 2.25rem); line-height: 1.32; text-wrap: pretty; }
+.htvc-ins b { font-weight: 800; }
+.htvc-plate {
+  display: inline; padding: 0.04em 0.28em; background: #fff; font-weight: 800;
+  box-decoration-break: clone; -webkit-box-decoration-break: clone;
+}
+.htvc-plate:first-child { margin-left: -0.28em; }
+.htvc-mark {
+  display: inline-grid; place-items: center; vertical-align: -0.12em;
+  width: 1.18em; height: 1.18em; margin: 0 0.12em; line-height: 1;
+  background: #fff; color: var(--teal-deep); border: 2px solid var(--ink); border-radius: 2px;
+  font-family: var(--font-display); font-weight: 800;
+}
+.htvc-para { margin-top: 0.85rem; font-size: clamp(1rem, 1.5vw, 1.12rem); line-height: 1.5; }
+.htvc--lc .htvc-band { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 clamp(0.9rem, 2.4vw, 1.6rem); align-items: start; }
+.htvc--lc .htvc-band-copy { grid-column: 2; min-width: 0; }
+.htvc--lc .htvc-ins { font-size: clamp(1.15rem, 2.2vw, 1.6rem); line-height: 1.35; }
+.htvc--lc .htvc-rest { font-weight: 800; }
+.htvc-min { margin-top: 0.35rem; font-family: var(--font-display); font-weight: 800; font-size: clamp(1.15rem, 2.2vw, 1.6rem); line-height: 1.25; }
+/* "COLUMN F" — the card's tile, standing up out of the band. */
+.htvc-col {
+  grid-column: 1; grid-row: 1 / span 2; align-self: start;
+  display: grid; justify-items: center; align-content: start;
+  min-width: clamp(5.5rem, 11vw, 8rem); margin-top: calc(-1 * clamp(1.6rem, 4vw, 3rem));
+  padding: 0.5rem 0.75rem 0.6rem; background: #fff; color: var(--ink);
+  border: 2.5px solid var(--ink); border-radius: 14px; box-shadow: 4px 4px 0 var(--ink);
+  font-family: var(--font-display); font-weight: 800; text-transform: uppercase; line-height: 1;
+}
+.htvc-col-k { font-size: clamp(0.8rem, 1.5vw, 1.05rem); letter-spacing: 0.06em; }
+.htvc-col-v { font-size: clamp(3.4rem, 8vw, 6rem); line-height: 0.9; margin-top: 0.1rem; }
+
+/* The papers' panel. */
+.htvc-panel {
+  grid-area: panel; min-width: 0;
+  padding: clamp(0.9rem, 2.4vw, 1.4rem) var(--htvc-pad);
+  background: #fdf6dc; background: color-mix(in srgb, var(--yellow) 18%, #fff);
+}
+.htvc-panel--lc { background: #e4f3ef; background: color-mix(in srgb, var(--teal) 14%, #fff); }
+.htvc-note { margin-top: 0.6rem; text-align: center; font-size: 0.85rem; color: var(--ink-soft); text-wrap: balance; }
+
+/* Blurred: every row or column that is not ours (aria-hidden) — pure
+   decoration, as on the registered card: there to be seen as "the others",
+   never read. */
+.htvc .is-blur { filter: blur(2px); opacity: 0.55; }
+/* A neighbour's logo is blurred harder than its words: a party mark can hold
+   a numeral (Sustainable Australia's house holds a "1"), and the only
+   numerals a card may show are our real 1s (C8). Seen as a mark, never read. */
+.htvc .is-blur img { filter: grayscale(1) blur(4px); }
+
+/* The Assembly paper — rows, ours highlighted with its tag. */
+.htvc-rows { display: grid; }
+.htvc-row {
+  display: grid; grid-template-columns: 2.4rem 2.6rem minmax(0, 1fr) auto; align-items: center; gap: 0.7rem;
+  min-height: 3.6rem; padding: 0.4rem 0.6rem; border-bottom: 1.5px solid var(--line);
+}
+.htvc-row.is-ours {
+  border: 2.5px solid var(--ink); border-radius: 6px; margin: 0.25rem 0;
+  background: var(--yellow-soft); box-shadow: 3px 3px 0 var(--yellow);
+}
+.htvc-row-logo { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; }
+.htvc-row-logo img { width: 100%; height: 100%; object-fit: contain; }
+.htvc-row-name { display: grid; min-width: 0; line-height: 1.2; }
+.htvc-row-top { font-size: 1.05rem; overflow-wrap: break-word; }
+.htvc-row-top b { font-weight: 800; letter-spacing: 0.02em; }
+.htvc-row-party { font-size: 0.85rem; color: var(--ink); }
+.htvc .htvf-box { width: 2.6rem; height: 2.6rem; border-width: 2px; background: #fff; }
+.htvc .htvf-box.is-ours { background: #fff; color: var(--teal-deep); box-shadow: none; border-width: 2.5px; font-size: 1.75rem; }
+.htvc-row.is-ph .htvf-skel i, .htvc-sc.is-ph .htvf-skel i { background: #c9c3b2; }
+.htvc-tag {
+  position: relative; justify-self: end;
+  padding: 0.3rem 0.7rem 0.3rem 0.85rem; margin-left: 0.6rem;
+  background: var(--ink); color: var(--paper); border-radius: 4px;
+  font-size: 0.78rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+}
+.htvc-tag::before {
+  content: ''; position: absolute; left: -0.5rem; top: 50%; translate: 0 -50%;
+  border: 0.5rem solid transparent; border-right-color: var(--ink); border-left: 0;
+}
+.htvc-rows.has-more .htvc-row.is-fade { opacity: 0.3; border-bottom: 0; -webkit-mask-image: linear-gradient(#000, transparent 85%); mask-image: linear-gradient(#000, transparent 85%); }
+
+/* "Don't forget …" and the Council strip under it (lower house card). */
+.htvc-also { margin-top: clamp(1rem, 2.4vw, 1.4rem); }
+.htvc-dont {
+  text-align: center; font-family: var(--font-display); font-weight: 650;
+  font-size: clamp(1.05rem, 1.9vw, 1.35rem); line-height: 1.35; text-wrap: balance; margin-bottom: 0.75rem;
+}
+.htvc-dont .htvc-plate { background: none; padding: 0; margin: 0; text-transform: uppercase; font-size: 1.12em; letter-spacing: 0.01em; }
+.htvc-dont .htvc-mark { color: var(--ink); }
+
+/* The above-the-line strip: end tabs, columns, ours highlighted. */
+.htvc-strip {
+  display: flex; align-items: stretch; min-width: 0;
+  background: #fff; border: 2px solid var(--ink);
+}
+.htvc-sc {
+  flex: 1 1 0; min-width: 0;
+  display: grid; justify-items: center; align-content: start; gap: 0.45rem;
+  padding: 0.55rem 0.3rem 0.75rem; text-align: center;
+  border-left: 1px solid #b9c7c2;
+  /* A neighbour's long name never runs into the next column (it is clipped,
+     and blurred anyway); ours is sized to fit. */
+  overflow: hidden;
+}
+.htvc-sc:first-child { border-left: 0; }
+.htvc-sc.is-ours { flex-grow: 1.35; background: var(--yellow-soft); outline: 3px solid var(--yellow); outline-offset: -3px; box-shadow: inset 0 0 0 4px var(--ink); }
+.htvc-sc-letter { font-family: var(--font-display); font-weight: 800; font-size: 1.15rem; line-height: 1; min-height: 1em; }
+.htvc-sc-logo { display: grid; place-items: center; width: 2.2rem; height: 2.2rem; }
+.htvc-sc-logo img { width: 100%; height: 100%; object-fit: contain; }
+.htvc-sc.is-ours .htvc-sc-logo:empty, .htvc-sc.is-ph .htvc-sc-logo { background: #c9c3b2; border-radius: 4px; }
+.htvc-sc.is-ours .htvc-sc-logo:empty { display: none; }
+.htvc-sc-name {
+  font-size: 0.68rem; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; line-height: 1.2;
+  overflow-wrap: anywhere; hyphens: auto;
+}
+.htvc-sc.is-ours .htvc-sc-name { font-size: 0.74rem; }
+.htvc-sc .htvf-skel { width: 100%; justify-items: center; }
+.htvc-sc .htvf-skel i { width: 80%; }
+.htvc-tab {
+  flex: 0 0 auto; display: grid; place-items: center; width: 2rem;
+  background: #dfe9e5; color: var(--ink); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; white-space: nowrap;
+}
+.htvc-tab--l { border-right: 1.5px solid var(--ink); }
+.htvc-tab--r { border-left: 1.5px solid var(--ink); }
+.htvc-tab span { writing-mode: vertical-rl; }
+.htvc-tab--l span { transform: rotate(180deg); }
+.htvc-paper--mini .htvc-strip { font-size: 0.92em; }
+.htvc-paper--mini .htvc-sc { padding-block: 0.4rem 0.55rem; gap: 0.35rem; }
+.htvc-paper--mini .htvc-sc.is-ours { flex-grow: 1.8; }
+.htvc-paper--mini .htvc-sc-name { font-size: 0.58rem; }
+.htvc-paper--mini .htvc-sc.is-ours .htvc-sc-name { font-size: 0.62rem; }
+.htvc-paper--mini .htvf-box { width: 2.15rem; height: 2.15rem; }
+.htvc-paper--mini .htvf-box.is-ours { font-size: 1.45rem; }
+.htvc-paper--mini .htvc-sc-logo { width: 1.8rem; height: 1.8rem; }
+
+/* The card's foot: our mark, the site, and what the drawing is. */
+.htvc-foot {
+  grid-area: foot; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.9rem;
+  padding: 0.7rem var(--htvc-pad); background: var(--teal-ink); color: var(--paper);
+}
+.htvc-foot-ad { width: 2.6rem; height: 2.6rem; border-radius: 6px; flex: none; }
+.htvc-foot-url { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.05rem, 2vw, 1.4rem); text-transform: uppercase; letter-spacing: 0.02em; }
+.htvc-foot-cap { margin-left: auto; font-size: 0.82rem; font-style: italic; text-align: right; }
+.htvc-foot-cap .htvf-cap-auth { max-width: none; margin: 0.25rem 0 0; }
+
+/* Under the upper house card: below the line, small. */
+.htvc-btl {
+  margin-top: 1rem; padding: 0.7rem 1rem; max-width: 72ch;
+  background: var(--sand); border-left: 5px solid var(--yellow); border-radius: 0 10px 10px 0;
+  font-size: 0.95rem; line-height: 1.45;
+}
+
+/* Phones (portrait): the card blocks stack; the papers stay full. */
+@media (max-width: 699px) {
+  .htvc { border-radius: 14px; box-shadow: 5px 5px 0 var(--ink); }
+  .htvc-wordmark { width: min(100%, 21rem); }
+  .htvc-frame { min-height: 0; aspect-ratio: 5 / 4; }
+  .htvc--lc .htvc-frame { aspect-ratio: 4 / 5; min-height: 0; }
+  .htvc-seat { margin-left: 0.6rem; }
+  .htvc-slogan { padding: 1rem var(--htvc-pad) 0.9rem; }
+  .htvc .htvc-points { padding-block: 1rem; }
+  .htvc-sc-name { overflow-wrap: normal; word-break: normal; }
+  .htvc-row { grid-template-columns: 1.9rem 2.2rem minmax(0, 1fr); gap: 0.5rem; min-height: 3.1rem; padding: 0.35rem 0.45rem; }
+  .htvc-row-logo { width: 1.9rem; height: 1.9rem; }
+  .htvc .htvf-box { width: 2.2rem; height: 2.2rem; }
+  .htvc .htvf-box.is-ours { font-size: 1.5rem; }
+  .htvc-row-top { font-size: 0.95rem; }
+  .htvc-row-party { font-size: 0.78rem; }
+  .htvc-tag { grid-column: 3; justify-self: start; margin: 0.15rem 0 0 0.45rem; font-size: 0.68rem; padding: 0.2rem 0.55rem 0.2rem 0.7rem; }
+  .htvc-sc { padding: 0.45rem 0.12rem 0.6rem; gap: 0.35rem; }
+  .htvc-sc-name { font-size: 0.56rem; letter-spacing: 0; }
+  .htvc-sc.is-ours .htvc-sc-name { font-size: 0.6rem; }
+  /* Ours is the one column meant to be read: never narrower than its longest
+     word ("AUSTRALIAN"), never clipped — the blurred neighbours give way. */
+  .htvc-sc.is-ours { flex: 1.35 0 0; min-width: min-content; overflow: visible; padding-inline: 0.4rem; }
+  .htvc-paper--mini .htvc-sc.is-ours { flex-grow: 1.8; }
+  .htvc-sc.is-ours .htvc-sc-name { overflow-wrap: normal; word-break: normal; hyphens: manual; }
+  .htvc-sc-logo { width: 1.6rem; height: 1.6rem; }
+  .htvc-tab { width: 1.35rem; font-size: 0.62rem; }
+  .htvc--lc .htvc-band { grid-template-columns: minmax(0, 1fr); }
+  .htvc--lc .htvc-band-copy { grid-column: 1; }
+  .htvc-col {
+    grid-row: auto; justify-self: start; display: inline-flex; align-items: baseline; gap: 0.5rem;
+    min-width: 0; margin: 0 0 0.75rem; padding: 0.35rem 0.8rem 0.4rem;
+  }
+  .htvc-col-v { font-size: 2.6rem; margin: 0; }
+  .htvc-foot-cap { margin-left: 0; flex-basis: 100%; text-align: left; }
+}
+/* Phones: a team's cut-out is short (two people side by side across a
+   narrow card), so its two labels are compact and sit low — never over a
+   face, the longest surname (BROADBRIDGE) whole. */
+@media (max-width: 480px) {
+  .htvc-who--lc .htvc-cut-names { gap: 0.3rem; padding-bottom: 0.3rem; }
+  .htvc-who--lc .htvc-cut-names .htvc-name-in { padding: 0.2rem 0.5rem 0.24rem 0.45rem; line-height: 0.92; }
+  .htvc-who--lc .htvc-cut-names .htvc-name-s { font-size: 0.95rem; }
+  .htvc-who--lc .htvc-cut-names .htvc-name-g { font-size: 0.68rem; }
+}
+@media (max-width: 380px) {
+  /* Small phones: the team's name labels sit UNDER their photos, never over
+     a face (the photos are often taken from further back than a headshot). */
+  .htvc--lc .htvc-photos .htvc-name { position: relative; left: auto; bottom: auto; margin-top: -0.6rem; max-width: 100%; }
+  .htvc-who--lc .htvc-cut-names .htvc-name-s { font-size: 0.9rem; }
+  .htvc-sc-logo { width: 1.3rem; height: 1.3rem; }
+  .htvc .htvc-strip .htvf-box { width: 1.75rem; height: 1.75rem; }
+  .htvc .htvc-strip .htvf-box.is-ours { font-size: 1.2rem; }
+  .htvc-tab { width: 1.1rem; }
+}
+
+/* 700–899px on screen (an iPad held upright, a phone held sideways): the
+   rows' panel is narrow in the card's two columns, so the "Vote 1 here" tag
+   drops under the name, as it does on phones, and the name keeps its width. */
+@media screen and (min-width: 700px) and (max-width: 899px) {
+  .htvc-row { grid-template-columns: 2.4rem 2.6rem minmax(0, 1fr); }
+  .htvc-tag { grid-column: 3; justify-self: start; margin: 0.15rem 0 0 0.45rem; }
+}
+
+/* From 700px — and on paper — the card's own layout. */
+@media (min-width: 700px), print {
+  .htvc--la {
+    grid-template-columns: minmax(0, 42fr) minmax(0, 58fr);
+    grid-template-areas:
+      'mast mast'
+      'who slogan'
+      'who points'
+      'who panel'
+      'band panel'
+      'foot foot';
+    grid-template-rows: auto auto auto 1fr auto auto;
+  }
+  .htvc--la .htvc-who { padding: 0 0 clamp(1rem, 2.4vw, 1.4rem) 0; }
+  .htvc--la .htvc-frame { border-left: 0; border-radius: 0 var(--radius) var(--radius) 0; aspect-ratio: auto; min-height: 17rem; }
+  .htvc--la .htvc-panel { border-top-left-radius: 28px; margin-left: clamp(0.6rem, 1.6vw, 1rem); }
+  .htvc--la .htvc-points { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.9rem 1.2rem; }
+  /* The candidate's cut-out stands larger than its column, as on the card:
+     centred on it, its far shoulder passing behind the paper's panel (the
+     panel is opaque and sits above it); the card's own edge clips the near
+     side. Beside the head the cut-out is transparent, so nothing it overlaps
+     above the panel is covered. */
+  /* …sized by the HEIGHT of its area (the slogan, the points and the paper
+     beside it), so the figure starts just under the masthead instead of
+     standing small at the foot of a tall teal column. */
+  .htvc--la .htvc-who--cut { overflow: visible; padding-bottom: 0; align-self: stretch; grid-template-rows: minmax(0, 1fr) auto; }
+  .htvc--la .htvc-who--cut .htvc-cut-img {
+    width: auto; height: 100%; max-width: none; max-height: 34rem; min-height: 0;
+    justify-self: unsafe center; object-fit: contain; object-position: 50% 100%;
+  }
+  .htvc--la .htvc-panel, .htvc--la .htvc-slogan, .htvc--la .htvc-points { position: relative; z-index: 1; }
+  .htvc--lc {
+    grid-template-columns: minmax(0, 56fr) minmax(0, 44fr);
+    grid-template-areas:
+      'mast mast'
+      'who slogan'
+      'who points'
+      'band band'
+      'panel panel'
+      'foot foot';
+    grid-template-rows: auto auto 1fr auto auto auto;
+  }
+  .htvc--lc .htvc-who { padding-bottom: clamp(1.6rem, 4vw, 3rem); }
+  /* The team's seat label clears the "COLUMN" tile, which stands up out of
+     the band by this measure. */
+  .htvc--lc .htvc-who--cut { padding-bottom: 0; }
+  .htvc--lc .htvc-who--cut .htvc-seat { margin-bottom: clamp(1.6rem, 4vw, 3rem); }
+  .htvc--lc .htvc-frame { aspect-ratio: auto; min-height: clamp(16rem, 26vw, 21rem); }
+  .htvc--lc .htvc-band { padding-top: clamp(1rem, 2.2vw, 1.4rem); }
+  /* The upper house card's three points start under the highlighter and run
+     down to the photos' foot, in large display type, as on the card. */
+  .htvc--lc .htvc-points { align-self: stretch; align-content: space-evenly; gap: 1rem; padding-top: 0.6rem; }
+  .htvc--lc .htvc-points li { font-size: clamp(1.15rem, 2.1vw, 1.6rem); font-weight: 700; line-height: 1.18; padding-left: 3rem; }
+  .htvc--lc .htvc-points li::before { width: 2.2rem; height: 2.2rem; top: -0.1em; }
+  .htvc--lc .htvc-points li::after { left: 0.8rem; top: 0.18em; width: 0.55rem; height: 1rem; }
+}
+
+/* ------------------------------------------------------------ sections */
+.htvf-sec { padding-block: clamp(3rem, 7vw, 5rem); }
+.htvf-sec-h { font-size: var(--step-3); line-height: 1.06; max-width: 22ch; }
+.htvf-sec-lede { color: var(--ink-soft); margin-top: 0.7rem; max-width: 62ch; font-size: var(--step-0); }
+
+/* The pictograms of the make-your-own and family cards (.htvx-start-ico). */
+.i-line { fill: none; stroke: var(--ink); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.i-thin { stroke: var(--ink-soft); stroke-width: 2; }
+.i-fill-yellow { fill: var(--yellow); }
+.i-fill-paper { fill: var(--paper); }
+
+/* Make sure your vote counts — the Council paper leads, wide; the Assembly
+   and the tips for both papers stack beside it. */
+.htvf-valid-grid { display: grid; gap: 1.25rem; margin-top: clamp(1.5rem, 3vw, 2.25rem); }
+@media (min-width: 900px) {
+  .htvf-valid-grid {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    grid-template-areas: 'lc la' 'lc both';
+    align-items: start;
+  }
+  .htvf-valid-col--lc { grid-area: lc; }
+  .htvf-valid-col--la { grid-area: la; }
+  .htvf-valid-col--both { grid-area: both; }
+}
+.htvf-valid-col { padding: 1.25rem; background: #fff; border: 1.5px solid var(--line); border-radius: 14px; }
+.htvf-valid-col--lc { border: 2px solid var(--ink); box-shadow: 5px 5px 0 var(--yellow); padding: clamp(1.25rem, 2.6vw, 1.75rem); }
+.htvf-valid-col--lc .htvf-valid-h { font-size: var(--step-2); }
+.htvf-valid-col--lc .htvf-ticks { gap: 0.8rem; }
+.htvf-valid-col--lc .htvf-ticks li { font-size: 1.06rem; }
+.htvf-valid-col--both { background: transparent; border: 0; border-top: 2px solid var(--ink); border-radius: 0; padding: 1rem 0.25rem 0; }
+.htvf-valid-h { font-size: var(--step-1); line-height: 1.2; }
+.htvf-ticks { list-style: none; margin: 0.9rem 0 0; padding: 0; display: grid; gap: 0.6rem; }
+.htvf-ticks li { position: relative; padding-left: 2.1rem; line-height: 1.45; }
+.htvf-ticks li::before {
+  content: ''; position: absolute; left: 0; top: 0.08em;
+  width: 1.4rem; height: 1.4rem; border-radius: 50%;
+  background: var(--yellow); border: 1.5px solid var(--ink);
+}
+.htvf-ticks li::after {
+  content: ''; position: absolute; left: 0.5rem; top: 0.32em;
+  width: 0.38rem; height: 0.7rem; border: solid var(--ink); border-width: 0 2.5px 2.5px 0; transform: rotate(45deg);
+}
+.htvf-tips { list-style: none; margin: 0.7rem 0 0; padding: 0; display: grid; gap: 0.5rem; }
+.htvf-tips li { position: relative; padding-left: 1.3rem; line-height: 1.45; color: var(--ink-soft); }
+.htvf-tips li::before {
+  content: ''; position: absolute; left: 0.15rem; top: 0.55em; width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--ink);
+}
+
+/* District pills, grouped by region: the landing page's "Browse all"
+   list (.htvf-dlist, its block at the end of this sheet), family mode's
+   no-JavaScript list and a region page's own districts (.htvf-ways, on
+   sand). */
+.htvf-ways { background: var(--sand); }
+.htvf-dlist { display: grid; gap: 1.4rem 1.6rem; margin-top: 1.6rem; }
+@media (min-width: 720px) { .htvf-dlist { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1120px) { .htvf-dlist { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.htvf-dgroup-h {
+  font-family: var(--font-body); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+  line-height: 1.25; color: var(--teal-deep); padding-bottom: 0.45rem; border-bottom: 2px solid var(--ink);
+}
+/* Side by side, a two-line region name must not push its column's rule down. */
+@media (min-width: 720px) {
+  .htvf-dgroup-h { min-height: calc(2.5em + 0.45rem); display: flex; align-items: flex-end; }
+}
+.htvf-dpills { list-style: none; margin: 0.7rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.htvf-dpills li { max-width: none; }
+.htvf-dpill {
+  display: inline-flex; align-items: center; gap: 0.4rem; min-height: 2.6rem;
+  padding: 0.35rem 0.85rem; border-radius: 999px;
+  background: #fff; border: 1.5px solid var(--line); color: var(--ink);
+  font-weight: 600; font-size: 0.95rem; text-decoration: none;
+}
+.htvf-dpill:hover { border-color: var(--ink); background: var(--yellow-soft); color: var(--ink); }
+.htvf-dpill-tag {
+  font-size: 0.64rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 0.12rem 0.45rem; border-radius: 999px; background: var(--yellow); border: 1px solid var(--ink);
+}
+
+/* Our candidates */
+.htvf-people-grid { display: grid; gap: 1.6rem 1.4rem; margin-top: clamp(1.5rem, 3vw, 2.25rem); }
+@media (min-width: 720px) { .htvf-people-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1120px) { .htvf-people-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.htvf-pgroup-h { display: grid; align-content: end; font-size: 1.08rem; line-height: 1.2; }
+@media (min-width: 720px) { .htvf-pgroup-h { min-height: calc(0.84rem + 2.6rem); } }
+.htvf-pgroup-h span {
+  font-family: var(--font-body); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal-deep);
+}
+.htvf-chips { list-style: none; margin: 0.7rem 0 0; padding: 0; display: grid; gap: 0.5rem; }
+.htvf-chips li { max-width: none; }
+.htvf-chip {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.45rem 1rem 0.45rem 0.45rem; border-radius: 999px;
+  background: #fff; border: 1.5px solid var(--line); color: var(--ink); text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+a.htvf-chip:hover { border-color: var(--ink); box-shadow: 3px 3px 0 var(--yellow); color: var(--ink); }
+.htvf-chip img, .htvf-chip-ph {
+  width: 3.2rem; height: 3.2rem; flex: none; border-radius: 50%;
+  border: 2px solid var(--ink); object-fit: cover; object-position: 50% 18%;
+}
+.htvf-chip-ph { display: grid; place-items: center; background: var(--yellow-soft); font-family: var(--font-display); font-weight: 800; }
+.htvf-chip-txt { display: grid; line-height: 1.2; min-width: 0; }
+.htvf-chip-txt b { font-size: 1rem; }
+.htvf-chip-txt span { font-size: 0.82rem; color: var(--ink-soft); }
+
+.htvf-dgroup-h a { color: inherit; text-decoration: none; }
+.htvf-dgroup-h a:hover { text-decoration: underline; }
+.htvf-pgroup-h a { color: inherit; text-decoration: none; }
+.htvf-pgroup-h a:hover { text-decoration: underline; }
+
+/* Phones: shorter. The candidate chips go compact, two up. */
+@media (max-width: 719px) {
+  .htvf-chips { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.45rem; }
+  .htvf-chip { gap: 0.5rem; padding: 0.3rem 0.6rem 0.3rem 0.3rem; }
+  .htvf-chip img, .htvf-chip-ph { width: 40px; height: 40px; font-size: 0.85rem; }
+  .htvf-chip-txt b { font-size: 0.88rem; line-height: 1.15; }
+  .htvf-chip-txt span { display: none; }
+  .htvf-people-grid { gap: 1.2rem; }
+}
+
+/* Closing: the VEC, and our words on choice */
+.htvf-close-inner {
+  display: grid; gap: 1rem 2rem; align-items: center;
+  padding: clamp(1.25rem, 3vw, 2rem); background: var(--sand);
+  border: 2px solid var(--ink); border-radius: 18px; box-shadow: 7px 7px 0 var(--yellow);
+}
+@media (min-width: 860px) { .htvf-close-inner { grid-template-columns: minmax(0, 1fr) auto; } }
+.htvf-close-h { font-size: var(--step-2); line-height: 1.12; }
+.htvf-close-inner p { margin-top: 0.5rem; }
+.htvf-closing--page { border-top: 0; padding-top: 0; }
+
+/* A district page: is this your district? (suburbs, postcodes, notes) and
+   the "Find another district" box — the landing page's search, by GET. */
+.htvf-place { background: var(--sand); }
+.htvf-place-grid { display: grid; gap: clamp(1.5rem, 4vw, 3rem); }
+@media (min-width: 900px) { .htvf-place-grid { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); align-items: start; } }
+.htvf-place-list { margin-top: 0.85rem; max-width: 70ch; }
+.htvf-place-hint { color: var(--ink-soft); font-size: 0.92rem; }
+.htvf-place-note {
+  margin-top: 0.75rem; padding: 0.65rem 0.9rem; max-width: 70ch; font-size: 0.95rem;
+  background: #fff; border-left: 5px solid var(--yellow); border-radius: 0 10px 10px 0;
+}
+.htvf-place-vec { margin-top: 0.9rem; font-weight: 650; }
+.htvf-another {
+  background: var(--paper); color: var(--ink);
+  border: 2px solid var(--ink); border-radius: 16px;
+  box-shadow: 6px 6px 0 var(--yellow);
+  padding: clamp(1rem, 2.4vw, 1.4rem);
+}
+.htvf-another .htvf-go { min-height: 3.4rem; padding-inline: 1.5rem; font-size: 1.05rem; flex: none; box-shadow: 3px 3px 0 var(--ink); }
+@media (max-width: 359px) {
+  .htvf-another .htvf-row { flex-wrap: wrap; }
+  .htvf-another .htvf-input { flex-basis: 100%; }
+  .htvf-another .htvf-go { width: 100%; min-height: 3rem; }
+}
+
+/* The rest of the region: its page, and its other districts. */
+.htvf-more .htvf-dpills, .htvf-region-dpills { margin-top: 1.2rem; }
+.htvf-more-region { font-weight: 750; font-size: var(--step-1); }
+.htvf-more-all { margin-top: 1.1rem; font-weight: 650; }
+.htvf-dpill.is-current { border-color: var(--ink); background: var(--yellow-soft); font-weight: 750; }
+.htvf-ways--region .htvf-dpills { gap: 0.5rem; }
+.htvf-chips--row { grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); gap: 0.6rem 0.9rem; margin-top: clamp(1.25rem, 3vw, 1.75rem); }
+
+/* -------------------------------------------------------------- print
+   A district or region page prints its papers only (.htvf--page): with no
+   card, one A4 sheet with the site's own authorisation line from the footer,
+   printed once, and a print-only line just above it: this sheet is for the
+   voter's own use. global.css hides the footer in print; these pages bring
+   back its authorisation line only (this stylesheet is linked on them alone).
+   With cards, one sheet per card, each carrying both lines (below). */
+/* ============================================================
+   "MAKE YOUR OWN HOW-TO-VOTE" and FAMILY MODE — one card each: the custom
+   card under a district's or region's result (src/components/htv/
+   HtvMakeOwn.astro), and the family card at the bottom of every how-to-vote
+   page, landing included (HtvFamilyStart.astro; ADR-97, stage 2 — moved to
+   the bottom by the owner, 2026-11-16). The site's framed-panel signature:
+   sand / white panels, ink border, yellow offset shadow. Never printed (the
+   print rules below).
+   CONTRAST: ink on sand 12.9:1, on white 14.7:1; ink-soft on sand 7.2:1,
+   on white 8.2:1. The preview site's disabled button: ink-soft on white.
+   ============================================================ */
+.htvx-start { background: var(--paper); }
+.htvx-start-grid { display: grid; gap: clamp(1.25rem, 3vw, 2rem); align-items: stretch; }
+@media (min-width: 860px) {
+  .htvx-start-grid.is-one { grid-template-columns: minmax(0, 42rem); }
+}
+.htvx-start-card {
+  position: relative; display: flex; flex-direction: column;
+  padding: clamp(1.25rem, 3vw, 2rem); padding-right: clamp(1.25rem, 3vw, 2rem);
+  background: var(--sand); color: var(--ink);
+  border: 2px solid var(--ink); border-radius: 18px; box-shadow: 7px 7px 0 var(--yellow);
+}
+.htvx-start-card--family { background: #fff; }
+.htvx-start-card p { max-width: none; }
+.htvx-start-ico { position: absolute; top: clamp(1rem, 2.6vw, 1.6rem); right: clamp(1rem, 2.6vw, 1.6rem); width: 3.25rem; height: 3.25rem; }
+.htvx-start-card > .eyebrow { padding-right: 4rem; }
+.htvx-start-h { margin-top: 0.35rem; padding-right: 3.5rem; font-size: clamp(1.45rem, 1.15rem + 1.2vw, 2rem); }
+.htvx-start-lede { margin-top: 0.65rem; font-size: 1.02rem; line-height: 1.5; color: var(--ink); }
+.htvx-start-go { margin-top: auto; padding-top: 1.15rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.65rem 1rem; }
+.htvx-start-covers { font-size: 0.92rem; font-weight: 650; color: var(--ink-soft); }
+.htvx-start-note { flex-basis: 100%; font-size: 0.92rem; line-height: 1.45; color: var(--ink-soft); }
+.htvx-start .btn[disabled] {
+  cursor: not-allowed; background: #fff; color: var(--ink-soft);
+  border: 2px dashed var(--ink-soft); box-shadow: none; transform: none;
+}
+@media (max-width: 459px) {
+  .htvx-start-ico { width: 2.6rem; height: 2.6rem; }
+  .htvx-start-go .btn { width: 100%; }
+}
+
+@media print {
+  @page { size: A4; margin: 11mm 12mm; }
+  html body #site-footer { display: block !important; background: none !important; color: var(--ink) !important; border: 0 !important; padding: 0 !important; }
+  html body #site-footer .foot-grid { display: none !important; }
+  html body #site-footer .foot-auth {
+    display: block !important; max-width: none; margin: 1.5mm 0 0; padding: 1.5mm 0 0;
+    border-top: 0.6pt solid #888; color: #222 !important; font-size: 8pt;
+  }
+  .htvf-banner, .htvf-search { box-shadow: none; }
+
+  .htvf--page > :not(.htvf-result) { display: none !important; }
+  .htvx-start { display: none !important; }
+
+  /* The LANDING page prints ONE short sheet, authorised: the heading and a
+     line saying where to find your own papers, our words on choice, the
+     own-use line and the footer's authorisation line — never the 88-district
+     list, the candidates or the family card (a separable sheet of printed
+     instructions carries the authorisation, ADR-95 addendum). */
+  .htvf:not(.htvf--page) > :is(.htvf-browse, .htvf-people) { display: none !important; }
+  .htvf:not(.htvf--page) .htvf-banner { background: none !important; color: var(--ink); border: 0; }
+  .htvf:not(.htvf--page) :is(.htvf-banner-media, .htvf-search, .htvf-alt) { display: none !important; }
+  .htvf:not(.htvf--page) .htvf-banner-inner { min-height: 0 !important; padding: 0 0 3mm !important; display: block; }
+  .htvf:not(.htvf--page) :is(.htvf-kicker, .htvf-h1, .htvf-sub) { color: var(--ink) !important; }
+  .htvf:not(.htvf--page) .htvf-kicker { font-size: 7.5pt; }
+  .htvf:not(.htvf--page) .htvf-kicker::before { display: none; }
+  .htvf:not(.htvf--page) .htvf-h1 { font-size: 20pt; max-width: none; margin-top: 1mm; }
+  .htvf:not(.htvf--page) .htvf-h1 .hl { background: none; padding: 0; }
+  .htvf:not(.htvf--page) .htvf-sub { display: none !important; }
+  .htvf:not(.htvf--page) .htvf-print-find { display: block !important; margin-top: 2mm; font-size: 10pt; max-width: none; }
+  .htvf:not(.htvf--page) .htvf-sec { padding-block: 2.5mm !important; background: none !important; border: 0 !important; }
+  .htvf:not(.htvf--page) .htvf-sec-h { font-size: 13pt; max-width: none; }
+  .htvf:not(.htvf--page) .eyebrow { font-size: 6.5pt; margin-bottom: 0.5mm; }
+  .htvf:not(.htvf--page) .htvf-close .htvf-close-inner { display: none !important; }
+  .htvf:not(.htvf--page) .htvf-closing--page { font-size: 8pt; margin-top: 0; padding-top: 0; }
+  .htvf:not(.htvf--page) > .htvf-print-only { display: block !important; }
+  .htvf:not(.htvf--page) .htvf-print-note--landing { display: block !important; margin-top: 2mm; }
+  .htvf:not(.htvf--page) .hl { background: none !important; padding: 0 !important; }
+  html:has(.htvf--page) .follow-bar, html:has(.htvf--page) .progress-bar { display: none !important; }
+  html:has(.htvf--page) body { background: #fff; font-size: 9.5pt; }
+  .htvf--page .htvf-result-tools, .htvf-crumbs { display: none !important; }
+  .htvf-print-only { display: block !important; }
+  .htvf-result-h .hl { background: none; padding: 0; }
+  .htvf-result { padding: 0 !important; background: #fff !important; }
+  .htvf-result .wrap { max-width: none; padding: 0; }
+  .htvf-result-grid { display: block !important; }
+  .htvf-print-mast {
+    display: flex; align-items: center; justify-content: space-between; gap: 4mm;
+    padding-bottom: 2mm; margin-bottom: 3mm; border-bottom: 1.2pt solid var(--ink); font-size: 9pt;
+  }
+  .htvf-print-mast img { height: 8mm; width: auto; }
+  .htvf-print-mast p { max-width: none; }
+  .htvf-result-head { padding-bottom: 1.5mm; border-bottom: 0; }
+  .htvf-result-head::after { display: none; }
+  .htvf-result .htvf-result-eyebrow { display: none; }
+  .htvf-result-h { font-size: 17pt; }
+  .htvf-result-region { font-size: 9.5pt; margin-top: 1mm; max-width: none; }
+  .htvf-result-tools { display: block !important; margin-top: 2mm !important; padding: 0 !important; border: 0 !important; }
+  .htvf-result-aside { padding: 0; background: none; border: 0; }
+  .htvf-basis, .htvf-basis-note { font-size: 8pt; margin-top: 1mm; }
+  .htvf-actions, .htvf-share-status, .htvf-person img, .htvf-person-ph, .htvf-person-link,
+  .htvf-team img, .htvf-team .htvf-person-ph { display: none !important; }
+  .htvf-step {
+    display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; gap: 4mm !important; align-items: start;
+    margin-top: 2.5mm; padding: 3mm 3.5mm; border-width: 1pt; border-radius: 3mm; box-shadow: none;
+    break-inside: avoid;
+  }
+  .htvf-step-copy { display: block !important; }
+  .htvf-figure { order: 0 !important; margin-top: 0 !important; }
+  .htvf-step-kicker { font-size: 7pt; }
+  .htvf-kick-sfx { display: inline !important; }
+  .htvf-step-h { font-size: 14pt; margin-top: 1mm; }
+  .htvf-step-sub { font-size: 8pt; margin-top: 0.5mm; }
+  .htvf-person { margin-top: 2mm; padding: 1.5mm 3mm; }
+  .htvf-person-role { font-size: 6.5pt; }
+  .htvf-person-name { font-size: 10.5pt; }
+  .htvf-team { margin-top: 2mm; gap: 1.5mm; }
+  .htvf-team-link { padding: 1mm 2.5mm; }
+  .htvf-team-txt b { font-size: 8.5pt; }
+  .htvf-team-txt span { font-size: 7pt; }
+  .htvf-step-note { margin-top: 2mm; padding: 1.5mm 2.5mm; font-size: 8.5pt; }
+  .htvf-steps { margin-top: 2mm; gap: 1.2mm; }
+  .htvf-steps li { font-size: 8.7pt; line-height: 1.35; padding-left: 5mm; }
+  .htvf-steps li::before { width: 2.4mm; height: 2.4mm; border-width: 0.8pt; left: 0.4mm; top: 0.4em; }
+  .htvf-steps li:not(:last-child)::after { display: none; }
+  .htvf-way { margin-top: 2.5mm; font-size: 9.5pt; }
+  .htvf-way-badge { font-size: 6pt; }
+  .htvf-either { margin-top: 2mm; padding: 1.5mm 2.5mm; font-size: 8.5pt; }
+  .htvf-figure { position: static !important; }
+  .htvf-figure figcaption { font-size: 7pt; margin-top: 1mm; }
+  .htvf-paper { box-shadow: none; padding: 2.5mm; font-size: 7.5pt; }
+  .htvf-paper-head { padding-bottom: 1.5mm; margin-bottom: 2mm; font-size: 6pt; }
+  .htvf-paper-head span + span { font-size: 9.5pt; }
+  .htvf-paper-foot { margin-top: 1.5mm; font-size: 6.5pt; }
+  .htvf-box { width: 6.5mm; height: 6.5mm; font-size: 13pt; border-width: 1.2pt; }
+  .htvf-box.is-ours { box-shadow: 0.6mm 0.6mm 0 var(--ink); }
+  .htvf-lc-cand .htvf-box { width: 4.5mm; height: 4.5mm; font-size: 8pt; }
+  .htvf-lc-cand .htvf-box.is-lead { box-shadow: none; }
+  .htvf-la-row { padding: 0.8mm 1.5mm; gap: 2.5mm; }
+  .htvf-la-name b { font-size: 8.5pt; }
+  .htvf-party { font-size: 5.5pt; }
+  .htvf-brace { font-size: 7pt; }
+  .htvf-brace--top { padding-bottom: 2.5mm; }
+  .htvf-lc-label { font-size: 6pt; margin: 0 0 1mm; }
+  .htvf-lc-col { padding: 1mm 0.5mm; gap: 1mm; }
+  .htvf-lc-line { margin: 3mm 0 1mm; border-top-width: 2.5pt; }
+  .htvf-lc-line > span { font-size: 6pt; top: -0.65rem; }
+  .htvf-ll-long { display: inline !important; }
+  .htvf-ll-short { display: none !important; }
+  .htvf-lc-btlcol { padding: 1mm; gap: 1mm; }
+  .htvf-lc-cand-name { font-size: 6.5pt; }
+  .htvf-skel i { height: 1.4mm; }
+  .htvf-closing { margin-top: 2mm; padding-top: 1mm; font-size: 7pt; max-width: none; border-top: 0; }
+  .htvf-print-note { display: block !important; margin-top: 1.5mm; font-size: 8pt; font-weight: 700; max-width: none; }
+  .htvf-lc-col--x { display: grid !important; }
+
+  /* The cards: one A4 page each — the lower house card first, the upper
+     house card on the next page — in the card's own layout (the 700px rules
+     above apply to print too). Where a result has the lower house card, it
+     IS the first sheet: the page's masthead and heading step aside (the card
+     carries the wordmark, the name and the seat). With the upper house card
+     alone, the plain Assembly panel comes first and keeps them. The print-only "own use" line and the
+     footer's authorisation line follow once, at the end. No printer's line,
+     no "Registered by the VEC", no QR code: this is not the printed card. */
+  .htvf-result[data-la-card='1'] .htvf-print-mast,
+  .htvf-result[data-la-card='1'] .htvf-result-head,
+  .htvf-result[data-kind='region'][data-cards='1'] .htvf-print-mast,
+  .htvf-result[data-kind='region'][data-cards='1'] .htvf-result-head { display: none !important; }
+  /* One authorisation line per sheet: with cards, each card's sheet — and the
+     plain Assembly sheet in front of an upper card — carries its own "own use"
+     and authorisation lines, and the end-of-document copies step aside. */
+  .htvf-result:is([data-cards='1'], [data-cards='2']) .htvc-set .htvf-sheet-legal,
+  .htvf-result:is([data-cards='1'], [data-cards='2'])[data-la-card='0'] .htvf-step--la .htvf-sheet-legal {
+    display: block !important; margin-top: 2.5mm; break-inside: avoid;
+  }
+  .htvf-sheet-note { font-size: 8pt; font-weight: 700; }
+  .htvf-sheet-auth { margin-top: 1mm; padding-top: 1.5mm; border-top: 0.6pt solid #888; color: #222; font-size: 8pt; }
+  .htvf-result:not([data-kind='region']):is([data-cards='1'], [data-cards='2'])[data-la-card='0'] .htvf-step--lc .htvc-set { break-before: page; }
+  .htvf-result:is([data-cards='1'], [data-cards='2']) .htvf-print-note { display: none !important; }
+  html:has(.htvf-result:is([data-cards='1'], [data-cards='2'])) body #site-footer { display: none !important; }
+  .htvf-result[data-cards='2'] .htvf-step--lc .htvc-set { break-before: page; }
+  .htvc-set { margin-top: 0; break-inside: avoid; }
+  .htvc-kicker { margin-bottom: 1.5mm; font-size: 7pt; }
+  .htvc { box-shadow: none; border-width: 1pt; border-radius: 3mm; break-inside: avoid; --htvc-pad: 5mm; }
+  .htvc-wordmark { width: 92mm; }
+  .htvc-mast { padding: 4.5mm 5mm 2.5mm; }
+  .htvc-frame { box-shadow: 1.6mm 1.6mm 0 var(--yellow); }
+  .htvc--la .htvc-frame { min-height: 70mm; }
+  .htvc-who--cut .htvc-cut-names { padding-bottom: 1.5mm; }
+  .htvc--lc .htvc-who--cut .htvc-seat { margin-bottom: 9mm !important; }
+  .htvc-cut-img { max-height: 92mm; width: auto; }
+  .htvc--lc .htvc-who--cut .htvc-cut-img { max-height: 76mm; }
+  .htvc--la .htvc-who--cut .htvc-cut-img { max-height: 92mm; }
+  .htvc--lc .htvc-frame { min-height: 62mm; }
+  .htvc-name-g { font-size: 10pt; }
+  .htvc-name-s { font-size: 21pt; }
+  .htvc--lc .htvc-name-s, .htvc-who--lc .htvc-name-s { font-size: 15pt; }
+  .htvc-seat { padding: 1.6mm 3mm; border-width: 1pt; }
+  .htvc-seat-place { font-size: 24pt; }
+  .htvc-seat-house { font-size: 7.5pt; }
+  .htvc-seat--lc .htvc-seat-house { font-size: 10pt; }
+  .htvc-seat--lc .htvc-seat-place { font-size: 12pt; }
+  .htvc-slogan { padding-top: 4mm; }
+  .htvc-slogan-a { font-size: 27pt; }
+  .htvc-slogan-b { font-size: 21pt; }
+  .htvc .htvc-points { padding: 4mm 5mm; gap: 2.5mm; }
+  .htvc .htvc-points li { font-size: 11pt; padding-left: 9mm; }
+  .htvc .htvc-points li::before { width: 6.2mm; height: 6.2mm; border-width: 1pt; }
+  .htvc .htvc-points li::after { left: 2.2mm; top: 0.2em; width: 1.6mm; height: 3mm; border-width: 0 1.4pt 1.4pt 0; }
+  .htvc--lc .htvc-points li { font-size: 13pt; padding-left: 10mm; }
+  .htvc--lc .htvc-points li::before { width: 7mm; height: 7mm; }
+  .htvc--lc .htvc-points li::after { left: 2.6mm; top: 0.2em; width: 1.8mm; height: 3.4mm; }
+  .htvc-slogan--lc .htvc-slogan-a { font-size: 23pt; }
+  .htvc-slogan--lc .htvc-slogan-b { font-size: 18pt; }
+  .htvc-band { padding: 4mm 5mm; }
+  .htvc-ins { font-size: 17pt; }
+  .htvc--lc .htvc-ins, .htvc-min { font-size: 13pt; }
+  .htvc-para { font-size: 9.5pt; margin-top: 2.5mm; }
+  .htvc-mark { border-width: 1pt; }
+  .htvc-col { margin-top: -9mm; min-width: 24mm; border-width: 1.2pt; box-shadow: 1mm 1mm 0 var(--ink); }
+  .htvc-col-k { font-size: 9pt; }
+  .htvc-col-v { font-size: 44pt; }
+  .htvc-panel { padding: 4mm 5mm; }
+  .htvc-row { min-height: 11mm; padding: 1mm 2mm; gap: 2.5mm; grid-template-columns: 8mm 9mm minmax(0, 1fr) auto; }
+  .htvc-row-logo { width: 8mm; height: 8mm; }
+  .htvc-row-top { font-size: 10pt; }
+  .htvc-row-party { font-size: 8pt; }
+  .htvc .htvf-box { width: 9mm; height: 9mm; border-width: 1.2pt; }
+  /* A long Assembly paper (eight names or more) keeps its card on one sheet
+     with its "own use" and authorisation lines — in the family pack too,
+     under its "For:" line: the rows close up. */
+  .htvc-rows:has(> :nth-child(8)) .htvc-row { min-height: 9.4mm; padding-block: 0.5mm; }
+  .htvc-rows:has(> :nth-child(8)) .htvf-box { width: 8mm; height: 8mm; }
+  .htvc-rows:has(> :nth-child(8)) .htvc-row-logo { width: 7mm; height: 7mm; }
+  .htvc-rows:has(> :nth-child(11)) .htvc-row { min-height: 8mm; }
+  .htvc-rows:has(> :nth-child(11)) .htvf-box { width: 7mm; height: 7mm; }
+  .htvc-rows:has(> :nth-child(11)) .htvc-row-top { font-size: 9pt; }
+  .htvc-rows:has(> :nth-child(11)) .htvc-row-party { font-size: 7pt; }
+  .htvc .htvf-box.is-ours { font-size: 17pt; border-width: 1.4pt; }
+  .htvc-tag { font-size: 7pt; }
+  .htvc-dont { font-size: 11pt; margin-bottom: 2.5mm; }
+  .htvc-also { margin-top: 3.5mm; }
+  .htvc-sc { padding: 1.6mm 0.8mm 2.2mm; gap: 1.4mm; }
+  .htvc-sc-letter { font-size: 11pt; }
+  .htvc-sc-logo { width: 7.5mm; height: 7.5mm; }
+  .htvc-sc-name { font-size: 6pt; }
+  .htvc-sc.is-ours .htvc-sc-name { font-size: 6.5pt; }
+  .htvc-tab { width: 6mm; font-size: 6.5pt; }
+  .htvc-paper--mini .htvf-box { width: 7.5mm; height: 7.5mm; }
+  .htvc-paper--mini .htvf-box.is-ours { font-size: 13pt; }
+  .htvc-note { font-size: 7.5pt; margin-top: 1.5mm; }
+  .htvc-foot { padding: 2.2mm 5mm; }
+  .htvc-foot-ad { width: 8mm; height: 8mm; }
+  .htvc-foot-url { font-size: 11pt; }
+  .htvc-foot-cap { font-size: 7.5pt; }
+  .htvc-btl { margin-top: 2.5mm; padding: 1.8mm 3mm; font-size: 8.5pt; max-width: none; }
+  /* A CSS blur filter does not survive Chromium's PDF output, so on paper the
+     other names are blurred with a text shadow instead (the glyphs themselves
+     transparent) — seen as "other names", never read. */
+  .htvc .is-blur { filter: none; opacity: 0.6; }
+  .htvc .is-blur, .htvc .is-blur * { color: transparent !important; text-shadow: 0 0 2.4px rgb(28 43 41 / 90%); }
+  /* The same filter would print a neighbour's logo SHARP (a logo can hold a
+     numeral — C8), so on paper it is not printed at all: the placeholders'
+     grey disc stands in its place, and its empty box fades further. */
+  .htvc .is-blur img { display: none !important; }
+  .htvc .is-blur .htvc-sc-logo:has(img), .htvc .is-blur .htvc-row-logo:has(img) {
+    background: #c9c3b2; border-radius: 50%; transform: scale(0.8);
+  }
+  .htvc .is-blur .htvf-box { opacity: 0.55; }
+  .htvc-sc-name { overflow-wrap: normal; word-break: normal; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* ============================================================
+   THE LANDING PAGE'S "BROWSE ALL 88 DISTRICTS" (src/components/
+   HtvFinder.astro, .htvf-browse — the owner, 2026-11-16, asked for the
+   landing page's long sections to go): every district as a plain link,
+   grouped by region, in a native <details> closed by default — the
+   no-JavaScript way to a district page and the crawl path to all 96 pages.
+   The disclosure is the site's own .htv-browse (global.css); the groups
+   and pills are .htvf-dlist / .htvf-dgroup-h / .htvf-dpill above. A quiet
+   strip straight under the search banner; never printed.
+   CONTRAST: ink on white 14.7:1; ink-soft (the "— by region" note) on
+   white 8.2:1; teal-deep (the region headings) on white 5.9:1.
+   ============================================================ */
+.htvf-browse { padding-block: clamp(1rem, 2.6vw, 1.5rem); }
+.htvf-browse .htv-browse { margin-top: 0; }
+.htvf-browse .htvf-dlist { margin-top: 0; padding: 1.1rem 1.1rem 1.25rem; }
+/* On the narrowest phones "— by region" would sit in a column of its own
+   beside the wrapped label: the region headings inside say it anyway. */
+@media (max-width: 359px) {
+  .htvf-browse .htv-browse-count { display: none; }
+}
+@media print {
+  .htvf-browse { display: none !important; }
+}
+
+/* ============================================================
+   FAMILY AND FRIENDS AT THE FOOT OF EVERY HOW-TO-VOTE PAGE
+   (src/components/htv/HtvFamilyStart.astro — the owner, 2026-11-16): the
+   landing page under "Our candidates", each district and region page after
+   its last section. The card closes the page, so it sits with the close
+   below it rather than a full section apart. Never printed (.htvx-start,
+   the print rules above).
+   ============================================================ */
+.htvx-start--family { padding-bottom: 0; }

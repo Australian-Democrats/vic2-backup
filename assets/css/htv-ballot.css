@@ -1,0 +1,364 @@
+/* ============================================================
+   "YOUR BALLOT PAPER" — the ballot-paper replicas (.htvb-*)
+   Owners: src/components/htv/HtvBallotPaperLA.astro, HtvBallotPaperLC.astro,
+   HtvBallotBox.astro + /assets/js/htv-ballot.js. Linked through Base's head
+   slot ONLY by the district and region how-to-vote pages (beside
+   htv-finder.css, whose tokens and print rules it builds on), so no other page
+   carries a byte of it.
+
+   The PAPER is drawn as the voter will see it — white, the paper's own header
+   and directions, ruled rows and columns, the parties' ballot logos in
+   greyscale — and set in this site's two faces only (Public Sans for the
+   paper's print, Bricolage for our 1: never a handwriting face). Around it,
+   the site's canon: a sand panel with the framed-panel signature (ink border,
+   yellow offset shadow), the .eyebrow-style label, ink and teal-deep type.
+
+   OPEN TICKET, made visible: our box (.is-ours) carries the 1 on a
+   highlighted row/column; every other box is .is-yours — empty, with a quiet
+   dashed teal-deep ring inside it (6.3:1 on white) that the legend names
+   "Yours to number". Parts of the paper the data does not give are hatched
+   (.is-tbd) or thin "⋯" slivers (.htvb-gap), never invented.
+
+   CONTRAST (every text pair, WCAG 2.2 AA): ink #1c2b29 on white 14.6:1, on
+   sand 13.0:1, on yellow-soft 11.9:1; ink-soft #46514f on white 8.2:1, on the
+   hatch's lightest stripe (#eef1ee) 7.2:1; teal-deep #147065 on white 6.3:1,
+   on sand 5.6:1; paper on ink 15:1 (the coach bubble).
+   ============================================================ */
+
+.htvb-set {
+  --htvb-col: 8.75rem;
+  --htvb-sliver: 1.75rem;
+  --htvb-tbd: 7rem;
+  --htvb-box: 2.75rem;
+  margin-top: clamp(1.75rem, 4vw, 2.75rem);
+  padding: clamp(1rem, 2.6vw, 1.75rem);
+  background: var(--sand); color: var(--ink);
+  border: 2px solid var(--ink); border-radius: 18px;
+  box-shadow: 7px 7px 0 var(--yellow);
+}
+.htvb-set p, .htvb-set li { max-width: none; }
+.htvb-eyebrow {
+  display: inline-block; padding: 0.22rem 0.7rem; border-radius: 999px;
+  background: var(--ink); color: var(--paper);
+  font-size: 0.74rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+}
+.htvb-h { margin-top: 0.6rem; font-size: clamp(1.45rem, 1.15rem + 1.3vw, 2.1rem); line-height: 1.08; }
+.htvb-lede { margin-top: 0.55rem; font-size: 1.02rem; line-height: 1.5; max-width: 52ch !important; }
+
+/* The legend: what the three kinds of box mean. */
+.htvb-legend { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: 0.55rem; font-size: 0.95rem; }
+.htvb-legend li { display: flex; align-items: center; gap: 0.65rem; }
+.htvb-legend--row { display: flex; flex-wrap: wrap; gap: 0.6rem 1.4rem; margin: 0; }
+.htvb-key {
+  flex: none; display: inline-grid; place-items: center; width: 1.9rem; height: 1.9rem; border-radius: 3px;
+  background: #fff; border: 2px solid var(--ink);
+  font-family: var(--font-display); font-weight: 800; font-size: 1.2rem; line-height: 1; color: var(--teal-deep);
+}
+.htvb-key--ours { background: #fff; box-shadow: 0 0 0 3px var(--yellow); }
+.htvb-key--yours { outline: 1.5px dashed var(--teal-deep); outline-offset: -6px; }
+.htvb-key--tbd { border-style: dashed; border-color: var(--ink-soft); background: repeating-linear-gradient(135deg, #fbfcfb 0 4px, #e3e8e5 4px 8px); }
+/* "Download the official how-to-vote card (PDF)" — under the card it prints. */
+.htvb-pdf { margin-top: 1.1rem; max-width: none; }
+.htvb-pdf-link { gap: 0.55rem; }
+.htvb-pdf-ico { flex: none; }
+
+/* ---------------------------------------------------------- the paper */
+.htvb-figure { margin: 0; min-width: 0; }
+.htvb-figure figcaption { margin-top: 0.6rem; text-align: center; font-size: 0.8rem; font-style: italic; color: var(--ink-soft); }
+.htvb-paper {
+  background: #fff; color: var(--ink);
+  border: 1px solid #c9cfcc; border-radius: 4px;
+  padding: clamp(0.9rem, 2.4vw, 1.5rem) clamp(0.8rem, 2.2vw, 1.4rem) clamp(1rem, 2.4vw, 1.4rem);
+  box-shadow: 0 1px 0 var(--line), 0 18px 36px rgb(28 43 41 / 14%), 0 2px 4px rgb(28 43 41 / 10%);
+  font-family: var(--font-body); font-size: 0.9rem; line-height: 1.3;
+}
+.htvb-paper-head { display: grid; justify-items: center; text-align: center; gap: 0.12rem; margin-bottom: 0.85rem; }
+.htvb-b1 { font-size: 0.74rem; font-weight: 750; letter-spacing: 0.1em; text-transform: uppercase; }
+.htvb-b2 { font-size: 1.02rem; font-weight: 800; }
+.htvb-b3 { font-size: 0.9rem; }
+.htvb-dir {
+  display: grid; gap: 0.2rem; max-width: 36rem; margin: 0 auto 1rem; padding: 0.55rem 0.8rem;
+  border: 1.5px solid var(--ink); font-size: 0.82rem; font-weight: 700; line-height: 1.35;
+}
+
+/* A box. Ours: the 1 in the display face, on a highlighted row / column. */
+.htvb-box {
+  flex: none; display: inline-grid; place-items: center;
+  width: var(--htvb-box); height: var(--htvb-box);
+  background: #fff; border: 2.5px solid var(--ink); border-radius: 2px;
+  font-family: var(--font-display); font-weight: 800; font-size: 1.75rem; line-height: 1; color: var(--teal-deep);
+}
+.htvb-box.is-yours { outline: 1.5px dashed var(--teal-deep); outline-offset: -8px; }
+.htvb-box.is-tbd { border-style: dashed; border-color: #8d9693; background: transparent; }
+button.htvb-box { padding: 0; cursor: pointer; }
+button.htvb-box:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* ------------------------------------------- the Assembly paper (portrait) */
+.htvb-paper--la { max-width: 30rem; margin-inline: auto; }
+.htvb-rows { display: grid; max-width: 26rem; margin: 0 auto; }
+.htvb-row {
+  display: grid; grid-template-columns: 2.5rem var(--htvb-box) minmax(0, 1fr); align-items: center; gap: 0.75rem;
+  min-height: 3.6rem; padding: 0.4rem 0.5rem; border-bottom: 1px solid #d9dedb;
+}
+.htvb-row:last-child { border-bottom: 0; }
+.htvb-row.is-ours { background: var(--yellow-soft); border-radius: 6px; box-shadow: inset 0 0 0 2.5px var(--ink), 3px 3px 0 var(--yellow); border-bottom-color: transparent; margin-block: 0.2rem; }
+.htvb-logo { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; }
+.htvb-logo img, .htvb-glogo img { width: 100%; height: 100%; object-fit: contain; filter: grayscale(1) contrast(1.1); }
+.htvb-cand { display: grid; min-width: 0; line-height: 1.25; }
+.htvb-nm { font-size: 1rem; overflow-wrap: break-word; }
+.htvb-nm b { font-weight: 800; letter-spacing: 0.02em; }
+.htvb-pt { font-size: 0.82rem; color: var(--ink-soft); }
+.htvb-row.is-ours .htvb-pt { color: var(--ink); }
+.htvb-row.is-tbd {
+  border: 1.5px dashed #8d9693; border-radius: 6px; margin-block: 0.2rem;
+  background: repeating-linear-gradient(135deg, #fbfcfb 0 8px, #eef1ee 8px 16px);
+}
+
+/* Desktop: the paper on the left, what it shows on the right. */
+@media (min-width: 900px) {
+  .htvb-set--la .htvb-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 30rem); gap: clamp(1.5rem, 4vw, 3rem); align-items: start; }
+  .htvb-set--la .htvb-head { order: 2; position: sticky; top: 6rem; }
+  .htvb-set--la .htvb-figure { order: 1; }
+  .htvb-set--la .htvb-paper--la { margin-inline: 0 auto; }
+}
+@media (max-width: 899px) {
+  .htvb-set--la .htvb-figure { margin-top: 1.25rem; }
+}
+
+/* ------------------------------------------ the Council paper (landscape) */
+.htvb-head--lc { display: grid; gap: 1rem; align-items: end; }
+@media (min-width: 900px) { .htvb-head--lc { grid-template-columns: minmax(0, 1fr) auto; } }
+.htvb-figure--lc { margin-top: 1.25rem; }
+/* Only the columns scroll (the paper's header and directions stay readable). */
+.htvb-scroll { overflow-x: auto; overscroll-behavior-x: contain; padding: 0.2rem 0.2rem 0.9rem; margin: -0.2rem; scrollbar-width: thin; }
+.htvb-scroll[tabindex]:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+.htvb-bs { min-width: min-content; }
+.htvb-dir--lc { max-width: 52rem; }
+.htvb-bs {
+  display: grid; grid-template-columns: var(--htvb-cols);
+  border: 1.5px solid var(--ink);
+}
+/* Above the line: letter, logo ABOVE the box, the name under it. */
+/* Every column is at least --htvb-col wide, and wider where a name in it is
+   longer — the paper's own type never breaks a word ("MCARTHU/R") or a
+   surname at its hyphen; its grid track is minmax(min-content, 1fr)
+   (HtvPaperLC.astro). */
+.htvb-atl {
+  display: grid; justify-items: center; align-content: start; gap: 0.4rem; text-align: center;
+  padding: 0.55rem 0.4rem 0.8rem; border-left: 1px solid #b9c2bf; min-width: var(--htvb-col);
+}
+.htvb-bs > :first-child, .htvb-line + * { border-left: 0; }
+.htvb-letter { font-family: var(--font-body); font-weight: 800; font-size: 1.05rem; line-height: 1; min-height: 1.05rem; }
+.htvb-glogo { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; }
+.htvb-gname { font-size: 0.74rem; font-weight: 750; line-height: 1.22; text-transform: uppercase; letter-spacing: 0.02em; overflow-wrap: normal; hyphens: manual; }
+.htvb-atl.is-ours, .htvb-btl.is-ours { background: var(--yellow-soft); box-shadow: inset 0 0 0 3px var(--ink); }
+.htvb-atl.is-ours .htvb-gname { font-size: 0.78rem; }
+/* The ungrouped column has no box above the line. */
+.htvb-atl.is-ug { background: #f7f8f7; }
+/* A run of columns the data does not give: a hair-thin sliver. */
+.htvb-gap {
+  display: grid; justify-items: center; align-content: center; gap: 0.5rem; padding: 0.5rem 0;
+  border-left: 1px solid #b9c2bf; background: #f6f7f6; color: var(--ink-soft);
+}
+.htvb-dots { font-weight: 900; font-size: 1.1rem; line-height: 1; }
+.htvb-rng { writing-mode: vertical-rl; font-size: 0.7rem; font-weight: 750; letter-spacing: 0.08em; }
+/* Before the draw: hatched blocks either side of ours. */
+.htvb-gap.is-tbd {
+  padding: 0.75rem; align-content: center;
+  background: repeating-linear-gradient(135deg, #fbfcfb 0 8px, #eef1ee 8px 16px);
+}
+.htvb-tbd-txt { font-size: 0.8rem; font-weight: 650; line-height: 1.3; text-align: center; color: var(--ink-soft); }
+/* The line. Its words stay in view while the columns slide (sticky inside
+   the scroll frame). */
+.htvb-line {
+  grid-column: 1 / -1; display: flex; justify-content: flex-end; align-items: center;
+  border-top: 5px solid var(--ink); height: 0; margin: 0;
+}
+.htvb-line > span {
+  position: sticky; right: 0.6rem; transform: translateY(-2.5px); padding: 0 0.5rem; background: #fff;
+  font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap;
+}
+/* Below the line: each group's candidates. The rows line up across the
+   paper, as printed: every column spans the same rows of the paper's grid
+   (--htvb-btl-rows: the heading, then one per candidate) as a subgrid. */
+.htvb-btl {
+  display: grid; grid-row: span var(--htvb-btl-rows, 1); grid-template-rows: subgrid; align-content: start;
+  gap: 0.15rem; padding: 0.9rem 0.45rem 0.7rem; border-left: 1px solid #b9c2bf; min-width: var(--htvb-col);
+}
+.htvb-btl-head { font-size: 0.72rem; font-weight: 750; line-height: 1.2; text-transform: uppercase; letter-spacing: 0.02em; padding: 0 0.15rem 0.35rem; overflow-wrap: normal; }
+.htvb-btl-head b { font-weight: 850; margin-right: 0.15rem; }
+.htvb-btl-cand { display: grid; grid-template-columns: var(--htvb-box) minmax(min-content, 1fr); align-items: center; gap: 0.5rem; min-height: calc(var(--htvb-box) + 0.3rem); }
+.htvb-btl-nm { font-size: 0.8rem; line-height: 1.2; overflow-wrap: normal; }
+/* A surname is one unbroken line — never split at its hyphen ("THIERY-/LAI",
+   "KHALILI-/NAGHADEH") — so the column's min-content is the whole surname. */
+.htvb-btl-nm b { display: block; font-weight: 800; letter-spacing: 0.02em; white-space: nowrap; }
+.htvb-btl-pt { display: block; font-size: 0.72rem; color: var(--ink-soft); }
+.htvb-btl-cand.is-tbd .htvb-btl-nm { height: 0.55rem; border-radius: 3px; background: repeating-linear-gradient(135deg, #fbfcfb 0 4px, #e3e8e5 4px 8px); }
+.htvb-btl-none {
+  display: block; margin-top: 0.3rem; padding: 0.6rem 0.4rem; border: 1.5px dashed #8d9693; border-radius: 4px;
+  font-size: 0.74rem; font-weight: 650; line-height: 1.25; color: var(--ink-soft); text-align: center;
+  background: repeating-linear-gradient(135deg, #fbfcfb 0 8px, #eef1ee 8px 16px);
+}
+.htvb-gap--btl { grid-row: span var(--htvb-btl-rows, 1); padding: 0.9rem 0; align-content: start; }
+.htvb-gap--btl.is-tbd { padding: 0; }
+
+/* One way at a time. Above the line (the default, and the only view without
+   the script): our 1 in our group's box; the boxes below the line are plain.
+   Below the line: our 1 for our lead; the boxes above the line are plain. */
+.htvb-set--lc[data-way='atl'] .htvb-mark--btl,
+.htvb-set--lc[data-way='btl'] .htvb-mark--atl { display: none; }
+.htvb-set--lc[data-way='atl'] .htvb-btl .htvb-box,
+.htvb-set--lc[data-way='btl'] .htvb-atl .htvb-box { outline: 0; border-color: #8d9693; }
+.htvb-set--lc[data-way='btl'] .htvb-atl.is-ours { background: transparent; box-shadow: none; }
+.htvb-set--lc[data-way='atl'] .htvb-btl.is-ours { background: #fffaf0; box-shadow: inset 0 0 0 1.5px #b9c2bf; }
+.htvb-set--lc[data-way='atl'] .htvb-legend-btl,
+.htvb-set--lc[data-way='btl'] .htvb-legend-atl,
+.htvb-set--lc[data-way='atl'] .htvb-lede-btl,
+.htvb-set--lc[data-way='btl'] .htvb-lede-atl,
+.htvb-set--lc[data-way='btl'] .htvb-atl-only { display: none; }
+
+/* The toggle (needs the script). 44px targets. */
+.htvb-way { display: inline-flex; flex-wrap: wrap; gap: 0.4rem; padding: 0.3rem; background: #fff; border: 2px solid var(--ink); border-radius: 999px; justify-self: start; }
+.htvb-way-btn {
+  min-height: 44px; padding: 0.45rem 1rem; border: 0; border-radius: 999px; cursor: pointer;
+  font: 700 0.95rem/1.15 var(--font-body); color: var(--ink); background: transparent;
+  display: inline-flex; align-items: center; gap: 0.45rem;
+}
+.htvb-way-btn[aria-pressed='true'] { background: var(--ink); color: var(--paper); }
+.htvb-way-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.htvb-way-tag { font-size: 0.66rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.12rem 0.45rem; border-radius: 999px; background: var(--yellow); color: var(--ink); }
+.htvb-foot { display: grid; gap: 1rem; margin-top: 1.1rem; align-items: center; }
+@media (min-width: 900px) { .htvb-foot { grid-template-columns: minmax(0, 1fr) auto; } }
+
+/* The coach: under the columns, never over them. Its room is reserved by CSS
+   wherever the paper is likely to be wider than the screen (below 900px), so
+   it appears and goes without moving anything; the script hides it (keeping
+   the room) once the visitor slides the paper, or when the paper fits, and
+   shows it on a wide screen only if a long paper overflows there. */
+.htvb-coach {
+  display: none; justify-self: center; width: fit-content; margin: 0.35rem auto 0;
+  align-items: center; gap: 0.45rem; padding: 0.45rem 0.9rem; border-radius: 999px;
+  background: var(--ink); color: var(--paper); font-size: 0.85rem; font-weight: 700; line-height: 1.2;
+  pointer-events: none;
+}
+.htvb-coach-arrow { font-weight: 800; }
+@media (max-width: 899px) { .htvb-coach { display: flex; } }
+.htvb-coach[data-show] { display: flex; }
+.htvb-coach[data-done] { visibility: hidden; }
+@media (prefers-reduced-motion: no-preference) {
+  .htvb-coach:not([data-done]) .htvb-coach-arrow:first-child { animation: htvb-nudge-l 1.6s ease-in-out 3; }
+  .htvb-coach:not([data-done]) .htvb-coach-arrow:last-child { animation: htvb-nudge-r 1.6s ease-in-out 3; }
+}
+@keyframes htvb-nudge-l { 0%, 100% { transform: none; } 50% { transform: translateX(-4px); } }
+@keyframes htvb-nudge-r { 0%, 100% { transform: none; } 50% { transform: translateX(4px); } }
+
+/* Phones: the Council paper scrolls inside its frame; the Assembly rows run
+   the full width. */
+@media (max-width: 699px) {
+  /* Before the draw the paper is three blocks; narrow hatched ones let it fit
+     a phone without sliding (the drawn paper slides, centred on ours). */
+  .htvb-set { --htvb-col: 8.25rem; --htvb-tbd: 4.25rem; border-radius: 14px; box-shadow: 5px 5px 0 var(--yellow); }
+  .htvb-gap.is-tbd { padding: 0.5rem 0.3rem; }
+  .htvb-tbd-txt { font-size: 0.72rem; }
+  /* Below the line: a surname fits beside its 44px box without breaking. */
+  .htvb-btl { padding-inline: 0.35rem; }
+  .htvb-btl-cand { gap: 0.4rem; }
+  .htvb-btl-nm { font-size: 0.76rem; }
+  .htvb-btl-nm b { letter-spacing: 0; }
+  /* The line's words stay whole inside a phone-width frame. */
+  .htvb-line > span { font-size: 0.62rem; letter-spacing: 0.04em; }
+  .htvb-paper { padding-inline: 0.7rem; }
+  .htvb-rows { max-width: none; }
+  .htvb-row { grid-template-columns: 2rem var(--htvb-box) minmax(0, 1fr); gap: 0.6rem; padding-inline: 0.35rem; }
+  .htvb-logo { width: 2rem; height: 2rem; }
+  .htvb-dir { font-size: 0.78rem; }
+  .htvb-way { justify-self: stretch; display: grid; grid-template-columns: 1fr 1fr; border-radius: 16px; gap: 0.3rem; }
+  .htvb-way-btn { justify-content: center; flex-direction: column; gap: 0.2rem; border-radius: 12px; padding: 0.45rem 0.6rem; text-align: center; }
+  .htvb-legend--row { display: grid; }
+}
+@media (max-width: 380px) {
+  .htvb-set { --htvb-col: 7.75rem; --htvb-tbd: 3.4rem; }
+  /* …and the pre-draw paper still fits a 320px screen without sliding. */
+  .htvb-paper--lc[data-drawn="false"] .htvb-bs { --htvb-col: 7.25rem; }
+  .htvb-line > span { right: 0.3rem; padding-inline: 0.3rem; font-size: 0.56rem; letter-spacing: 0.03em; }
+  .htvb-tbd-txt { font-size: 0.66rem; }
+  .htvb-way-btn { font-size: 0.88rem; padding-inline: 0.4rem; }
+}
+
+/* ------------------------------------------------------------- print
+   Each replica is its OWN sheet, after the card it belongs to, with the "own
+   use" line and the authorisation line once (htv-finder.css styles them; the
+   footer's copy steps aside whenever cards print). The Council paper prints on
+   a landscape A4 page, as the real paper is landscape; the parts that need
+   the script (the toggle, the coach) do not print. */
+@page htvb-landscape { size: A4 landscape; margin: 7mm 10mm; }
+@media print {
+  .htvb-set {
+    break-before: page; break-inside: avoid; margin: 0; padding: 0;
+    background: none; border: 0; box-shadow: none;
+  }
+  .htvb-set--lc { page: htvb-landscape; }
+  /* The Council paper's sheet is the last: it carries the closing words, and
+     the copy after the papers steps aside (it would print a page of its own). */
+  .htvf-result:has(.htvb-set--lc) .htvf-result-grid > .htvf-closing.htvf-print-only { display: none !important; }
+  .htvb-closing { margin-top: 2mm !important; }
+  .htvb-set .htvf-sheet-legal { display: block !important; margin-top: 3mm; break-inside: avoid; }
+  .htvb-way, .htvb-coach { display: none !important; }
+  .htvb-bs { min-width: 0; }
+  .htvb-eyebrow { padding: 0.6mm 2mm; font-size: 6.5pt; }
+  .htvb-h { font-size: 15pt; margin-top: 1.5mm; }
+  .htvb-lede { font-size: 9pt; margin-top: 1mm; }
+  .htvb-legend { font-size: 8pt; margin-top: 2mm; gap: 1.2mm 5mm; }
+  .htvb-key { width: 5mm; height: 5mm; font-size: 9pt; border-width: 1pt; }
+  .htvb-pdf { display: none; }
+  .htvb-set--la .htvb-grid { display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr); gap: 6mm; align-items: start; }
+  .htvb-set--la .htvb-head { order: 2; position: static; }
+  .htvb-set--la .htvb-figure { order: 1; margin-top: 0; }
+  .htvb-figure figcaption { font-size: 7pt; margin-top: 1mm; }
+  .htvb-paper { box-shadow: none; border: 0.8pt solid #888; padding: 4mm; font-size: 8.5pt; }
+  .htvb-dir { font-size: 7.5pt; border-width: 1pt; padding: 1.5mm 2.5mm; margin-bottom: 3mm; }
+  .htvb-b2 { font-size: 10.5pt; }
+  .htvb-box { width: 9mm; height: 9mm; border-width: 1.4pt; font-size: 17pt; }
+  .htvb-row { min-height: 12mm; padding: 1mm 2mm; gap: 3mm; grid-template-columns: 9mm 9mm minmax(0, 1fr); }
+  .htvb-logo { width: 9mm; height: 9mm; }
+  .htvb-nm { font-size: 10pt; }
+  .htvb-pt { font-size: 8pt; }
+  .htvb-scroll { overflow: visible; padding: 0; margin: 0; }
+  .htvb-set--lc { --htvb-col: 0px; --htvb-sliver: 6mm; --htvb-tbd: 30mm; }
+  .htvb-set--lc .htvb-box { width: 6.8mm; height: 6.8mm; font-size: 13pt; }
+  .htvb-glogo { width: 7mm; height: 7mm; }
+  .htvb-atl { padding: 1.2mm 0.6mm 1.8mm; gap: 1mm; }
+  .htvb-gname, .htvb-btl-head, .htvb-atl.is-ours .htvb-gname { font-size: 6.5pt; letter-spacing: 0; }
+  .htvb-btl-nm { font-size: 6.5pt; overflow-wrap: normal; }
+  .htvb-btl-nm b { letter-spacing: 0; }
+  /* Below the line on a whole paper (a dozen columns or more, up to five
+     candidates each), each name takes its column's full width under its box —
+     never a word broken into letters — and the column heading is its letter
+     alone (the group's name is printed right above it), so the whole paper
+     fits its one landscape sheet. */
+  .htvb-btl-cand { grid-template-columns: minmax(min-content, 1fr); justify-items: start; min-height: 0; gap: 0.5mm; margin-bottom: 0.8mm; }
+  .htvb-btl { padding: 3.2mm 1mm 1mm; row-gap: 0; }
+  .htvb-paper--lc[data-drawn='true'] .htvb-btl-hn { display: none; }
+  /* A whole Council paper is tall (up to five candidates a column): its
+     sheet keeps everything else compact so the paper, the legend and the
+     legal lines share one landscape page. */
+  .htvb-set--lc .htvb-h { font-size: 13pt; margin-top: 1mm; }
+  .htvb-set--lc .htvb-lede { max-width: none !important; font-size: 8.5pt; margin-top: 0.6mm; }
+  .htvb-set--lc .htvb-paper { padding: 2.5mm 3mm 3mm; }
+  .htvb-set--lc .htvb-paper-head { gap: 0; margin-bottom: 1.2mm; }
+  .htvb-set--lc .htvb-b2 { font-size: 10pt; }
+  .htvb-set--lc .htvb-dir { margin-bottom: 1.6mm; padding: 0.8mm 2.5mm; gap: 0.2mm; }
+  .htvb-set--lc .htvb-atl { padding: 1mm 0.6mm 1.4mm; gap: 0.8mm; }
+  .htvb-set--lc .htvb-atl .htvb-box { width: 6.2mm; height: 6.2mm; }
+  .htvb-set--lc .htvb-glogo { width: 6.2mm; height: 6.2mm; }
+  .htvb-set--lc .htvb-btl { padding-top: 2.4mm; }
+  .htvb-set--lc .htvb-btl .htvb-box { width: 5.2mm; height: 5.2mm; }
+  .htvb-set--lc .htvb-btl-cand { margin-bottom: 0.6mm; gap: 0.4mm; }
+  .htvb-set--lc .htvb-btl-nm { line-height: 1.08; }
+  .htvb-set--lc .htvb-figure--lc { margin-top: 1.5mm; }
+  .htvb-set--lc .htvb-foot { margin-top: 1.2mm; }
+  .htvb-set--lc .htvb-legend { margin-top: 0; }
+  .htvb-set--lc .htvf-sheet-legal { margin-top: 1.5mm; }
+  .htvb-foot { margin-top: 2mm; }
+  .htvb-box.is-yours { outline-width: 1pt; outline-offset: -2.2mm; }
+}
