@@ -1,0 +1,189 @@
+/* ============================================================================
+   /how-to-vote — "Find your how-to-vote card" (ADR-104), the page around the
+   cards (/assets/css/htv-card.css styles the cards themselves). Linked only
+   in the card-finder state.
+
+   The search box is the /candidates finder ("Enter your postcode or suburb",
+   src/pages/candidates.astro's .cand-finder / .efinder-* / .cand-tools-*
+   rules), REPRODUCED here value for value under .htvf-* names rather than
+   moved into a shared sheet: those rules are scoped to that page, and moving
+   them would change /candidates' output. Change one, change the other.
+   Tokens only; yellow is a fill, never text.
+   ========================================================================= */
+
+.htvf-intro {
+  margin-top: clamp(1.75rem, 4vw, 2.5rem); max-width: 62ch;
+  font-size: var(--step-0); line-height: 1.65; color: var(--ink-soft);
+}
+.htvf-sub { color: var(--ink-soft); margin-top: 1rem; max-width: 56ch; }
+
+/* The section under the intro — the hub's .campaign rhythm and heading. */
+.htvf-find {
+  margin-top: clamp(2.5rem, 6vw, 4rem);
+  padding-top: clamp(1.8rem, 4vw, 2.6rem);
+  border-top: 1.5px solid var(--line);
+  padding-bottom: clamp(2.5rem, 6vw, 4rem);
+}
+.htvf-eyebrow {
+  font-size: 0.78rem; font-weight: 700; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--teal-deep);
+}
+.htvf-h2 {
+  position: relative;
+  margin-top: 0.35rem;
+  font-family: var(--font-display); font-size: var(--step-3);
+  line-height: 1.08; letter-spacing: -0.015em;
+  padding-bottom: 0.35rem;
+}
+.htvf-h2-rule {
+  position: absolute; left: 0; bottom: 0;
+  width: 3.4rem; height: 4px; background: var(--yellow);
+}
+
+/* ---- The finder (= .cand-finder) ---- */
+.htvf-tool {
+  position: relative; z-index: 3;
+  margin-top: 1.2rem; padding: 0.9rem 1rem;
+  background: var(--sand); border: 1.5px solid var(--line); border-radius: var(--radius);
+}
+.htvf-field { display: grid; gap: 0.3rem; min-width: 0; max-width: 38rem; }
+.htvf-label {
+  font-family: var(--font-body); font-weight: 700; font-size: 0.76rem;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal-ink);
+}
+.htvf-row { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0.6rem; }
+.htvf-input {
+  width: 100%; min-height: 44px; padding: 0.6rem 0.85rem;
+  font: 600 1rem var(--font-body); color: var(--ink);
+  background: #fff; border: 2px solid var(--ink); border-radius: 8px;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.htvf-input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.htvf-go { min-height: 44px; }
+.htvf-note { margin: 0; font-size: 0.85rem; color: var(--ink-soft); }
+.htvf-out { display: grid; justify-items: start; }
+/* Kept in the accessibility tree while empty (never display:none), so the
+   first answer is announced. */
+.htvf-status { margin: 0.75rem 0 0; font-weight: 600; color: var(--ink); max-width: 72ch; }
+.htvf-status:empty { margin: 0; }
+.htvf-choose { margin-top: 0.6rem; }
+.htvf-choices { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+/* A choice is a district, with the card it gets beneath — two lines, so the
+   /candidates pill opens into the site's rounded box. ink-soft holds AA on
+   white and on the yellow fill of the chosen one. */
+.htvf-choice {
+  display: grid; gap: 0.05rem;
+  min-height: 44px; padding: 0.5rem 0.95rem; cursor: pointer; text-align: left;
+  font: 700 0.95rem var(--font-body); color: var(--ink);
+  background: #fff; border: 2px solid var(--ink); border-radius: 12px;
+}
+.htvf-choice[aria-pressed='true'] { background: var(--yellow); box-shadow: 2px 2px 0 var(--ink); }
+.htvf-choice-d { display: block; }
+.htvf-choice-r { display: block; font-weight: 600; font-size: 0.85rem; line-height: 1.35; color: var(--ink-soft); }
+/* "Not sure which district you're in?" — under the choices. */
+.htvf-vec { margin: 0.6rem 0 0; font-size: 0.95rem; color: var(--ink-soft); max-width: 72ch; }
+.htvf-vec a { font-weight: 700; color: var(--teal-deep); text-underline-offset: 3px; }
+.htvf-vec a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.htvf-choice:focus-visible,
+.htvf-showall:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.htvf-showall {
+  min-height: 44px; padding: 0.45rem 0.6rem; cursor: pointer; border: 0; background: none;
+  font: 700 0.95rem var(--font-body); color: var(--teal-deep);
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.htvf-clear {
+  margin: 0.5rem 0 0; min-height: 44px; padding: 0; border: 0; background: none; cursor: pointer;
+  font: 700 1rem var(--font-body); color: var(--teal-deep);
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.htvf-clear:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* ---- The dropdown (= .efinder-list) ---- */
+.htvf-combo { position: relative; flex: 1 1 14rem; min-width: 0; }
+.htvf-list {
+  position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 0.35rem);
+  margin: 0; padding: 0.3rem; list-style: none;
+  max-height: 18rem; overflow-y: auto;
+  background: #fff; border: 2px solid var(--ink); border-radius: 10px;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.htvf-list li {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 0.8rem;
+  min-height: 44px; padding: 0.55rem 0.75rem; border-radius: 6px; cursor: pointer;
+}
+.htvf-list li[aria-selected='true'],
+.htvf-list li:hover { background: var(--yellow-soft); }
+.htvf-list li[aria-selected='true'] { box-shadow: inset 4px 0 0 var(--ink); }
+.htvf-opt { font-weight: 700; color: var(--ink); }
+.htvf-opt-hint { font-size: 0.85rem; color: var(--ink-soft); text-align: right; }
+@media (max-width: 520px) {
+  .htvf-list li { flex-direction: column; gap: 0.1rem; }
+  .htvf-opt-hint { text-align: left; }
+}
+
+/* ---- "All our how-to-vote cards": the browse tiles (the hub's framed
+   region cards: ink frame, quiet offset that turns yellow on hover) ---- */
+.htvf-all {
+  margin-top: clamp(2.2rem, 6vw, 3.2rem);
+  padding-top: clamp(1.4rem, 4vw, 2rem);
+  border-top: 1.5px solid var(--line);
+}
+.htvf-all-h { font-family: var(--font-display); font-weight: 800; font-size: var(--step-1); }
+.htvf-tiles {
+  list-style: none; margin: 1.1rem 0 0; padding: 0;
+  display: grid; gap: 1.4rem 1.1rem;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+}
+.htvf-tile {
+  display: grid; gap: 0.15rem; text-decoration: none; color: var(--ink);
+  border-radius: 8px;
+}
+.htvf-tile-img {
+  display: block; margin-bottom: 0.55rem;
+  border: 2px solid var(--ink); border-radius: 8px; overflow: hidden; background: var(--sand);
+  box-shadow: 4px 4px 0 var(--line);
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+.htvf-tile-img img { display: block; width: 100%; height: auto; aspect-ratio: 1600 / 2263; }
+.htvf-tile:hover .htvf-tile-img,
+.htvf-tile:focus-visible .htvf-tile-img { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 var(--yellow); }
+.htvf-tile[aria-current='true'] .htvf-tile-img { box-shadow: 5px 5px 0 var(--yellow); }
+.htvf-tile:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
+.htvf-tile-place { font-weight: 700; font-size: 0.95rem; line-height: 1.3; }
+.htvf-tile-house { font-size: 0.85rem; color: var(--ink-soft); }
+.htvf-tile[aria-current='true'] .htvf-tile-place { text-decoration: underline; text-decoration-color: var(--yellow); text-decoration-thickness: 4px; text-underline-offset: 3px; }
+@media (max-width: 420px) {
+  .htvf-tiles { grid-template-columns: 1fr 1fr; }
+}
+
+/* ---- The cards: each on the candidate pages' sand ground ---- */
+.htvf-results { margin-top: clamp(1.4rem, 4vw, 2rem); display: grid; gap: clamp(1.4rem, 4vw, 2rem); }
+.htvf-slot {
+  background: var(--sand); border-radius: 18px;
+  padding: clamp(1rem, 3.5vw, 1.8rem);
+  --htvc-bleed: clamp(1rem, 3.5vw, 1.8rem);
+  scroll-margin-top: 5.5rem;
+}
+/* "If you're in Essendon District" — the site's eyebrow, over the card's own
+   head, while a split search shows more than one card. */
+.htvf-for { display: block; margin-bottom: 0.6rem; }
+
+/* ---- Nowhere to show: we are not standing there ---- */
+.htvf-none {
+  margin-top: clamp(1.4rem, 4vw, 2rem);
+  padding: clamp(1.1rem, 3.5vw, 1.8rem);
+  background: #fff; border: 2px solid var(--ink); border-radius: var(--radius);
+  box-shadow: 6px 6px 0 var(--yellow);
+  scroll-margin-top: 5.5rem;
+}
+.htvf-none-h {
+  font-family: var(--font-display); font-weight: 800; font-size: var(--step-2);
+  line-height: 1.15; max-width: 30ch;
+}
+.htvf-none-body { margin-top: 0.6rem; max-width: 60ch; color: var(--ink-soft); }
+.htvf-none-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.2rem; }
+
+@media print {
+  .htvf-tool, .htvf-all, .htvf-none { display: none !important; }
+  .htvf-slot { background: none; padding: 0; }
+}

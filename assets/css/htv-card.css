@@ -1,0 +1,212 @@
+/* ============================================================================
+   Registered how-to-vote card (ADR-104) — src/components/HtvCardViewer.astro.
+   Linked only by a page that shows a card (candidate pages with one, and the
+   /how-to-vote card finder), after global.css + site.css, so it uses the site
+   tokens and adds nothing to any other page.
+
+   The card's own pages carry the frame — ink border and the yellow offset
+   shadow of the site's framed photos (.hero-photo), with the slight tilt of
+   the homepage's focus photo — because they are the thing being handed over.
+   Everything around them is plain: rhythm, not boxes. Yellow is a fill only,
+   never text; every text pair holds WCAG 2.2 AA on paper and on sand.
+   ========================================================================= */
+
+.htvc { position: relative; }
+/* The phone swipe runs to the edges of the sand ground it sits on. */
+.chtv-chapter .htvc { --htvc-bleed: clamp(1rem, 3.5vw, 1.8rem); }
+.htvc + .htvc { margin-top: clamp(2.2rem, 6vw, 3.2rem); }
+
+/* ---- Head: the pill (house and place), the heading, one line ---- */
+.htvc-head { display: grid; gap: 0.45rem; justify-items: start; }
+.htvc-pill {
+  display: inline-flex; align-items: center;
+  padding: 0.2rem 0.75rem;
+  background: #fff; border: 1.5px solid var(--ink); border-radius: 14px;
+  font-family: var(--font-body); font-weight: 700; font-size: 0.8rem; line-height: 1.4;
+  color: var(--ink);
+}
+.htvc-title {
+  font-family: var(--font-display); font-weight: 800;
+  font-size: var(--step-2); line-height: 1.12; letter-spacing: -0.015em;
+  color: var(--ink); max-width: 26ch; text-wrap: balance;
+}
+.htvc-lede { max-width: 60ch; font-size: 0.98rem; line-height: 1.6; color: var(--ink-soft); }
+
+/* ---- The two pages ---- */
+.htvc-stage { margin-top: clamp(1.1rem, 3vw, 1.6rem); }
+.htvc-track {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 400px));
+  justify-content: center; gap: clamp(1.5rem, 4.5vw, 3.25rem);
+  padding: 1.1rem 0.75rem 0.9rem;
+}
+.htvc-page { margin: 0; min-width: 0; }
+.htvc-frame {
+  position: relative; display: block;
+  border: 2px solid var(--ink); border-radius: 8px; background: #fff;
+  box-shadow: 8px 8px 0 var(--yellow);
+  transform: rotate(var(--htvc-tilt, 0deg));
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.htvc-page--front { --htvc-tilt: -1.2deg; }
+.htvc-page--back { --htvc-tilt: 1deg; }
+.htvc-frame img {
+  display: block; width: 100%; height: auto; aspect-ratio: 1600 / 2263;
+  border-radius: 6px; background: var(--sand);
+}
+.htvc-page:hover .htvc-frame,
+.htvc-page:focus-within .htvc-frame { transform: rotate(0deg) translateY(-2px); box-shadow: 10px 10px 0 var(--yellow); }
+
+/* The whole page is the "enlarge" target; its name says so, and the picture's
+   own alt text (outside the link) says what the card says. */
+.htvc-zoom {
+  position: absolute; inset: 0; border-radius: 6px;
+  text-decoration: none;
+}
+.htvc-zoom:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
+/* A sticker on the page's top corner, half off the edge — it never covers the
+   card's own printing (the authorisation runs along the bottom). */
+.htvc-zoom-chip {
+  position: absolute; top: -0.85rem; right: -0.7rem;
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  background: var(--ink); color: #fff; border: 2px solid var(--ink); border-radius: 999px;
+  font: 700 0.78rem/1.3 var(--font-body);
+  box-shadow: 2px 2px 0 var(--yellow);
+}
+.htvc-zoom-chip::before {
+  content: ''; width: 0.8rem; height: 0.8rem; flex: none;
+  border: 2px solid currentColor; border-radius: 50%;
+  box-shadow: 3px 3px 0 -1px currentColor;
+}
+.htvc-zoom:hover .htvc-zoom-chip,
+.htvc-zoom:focus-visible .htvc-zoom-chip { background: var(--yellow); color: var(--ink); }
+.htvc-cap {
+  margin-top: 0.9rem; text-align: center;
+  font-weight: 700; font-size: 0.88rem; color: var(--ink-soft);
+}
+
+/* Phones: one page at a time, the other peeking — swipe, or use the pager. */
+.htvc-pager { display: flex; justify-content: center; gap: 0.5rem; margin-top: 0.35rem; }
+.htvc-pager-btn {
+  min-height: 44px; min-width: 6rem; padding: 0.45rem 1rem; cursor: pointer;
+  font: 700 0.95rem var(--font-body); color: var(--ink);
+  background: #fff; border: 2px solid var(--ink); border-radius: 999px;
+}
+.htvc-pager-btn[aria-pressed='true'] { background: var(--yellow); box-shadow: 2px 2px 0 var(--ink); }
+.htvc-pager-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+@media (max-width: 759px) {
+  .htvc-track {
+    display: flex; justify-content: flex-start; gap: 1rem;
+    overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory; scroll-padding-inline: 8%;
+    padding: 1.1rem 8% 1.1rem;
+    margin-inline: calc(-1 * var(--htvc-bleed, 1rem));
+    scrollbar-width: none;
+  }
+  .htvc-track::-webkit-scrollbar { display: none; }
+  .htvc-page { flex: 0 0 84%; max-width: 380px; scroll-snap-align: center; }
+  /* With the Front / Back buttons showing, the captions say it twice. */
+  .htvc-stage:has(.htvc-pager:not([hidden])) .htvc-cap {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  .htvc-frame { --htvc-tilt: 0deg; box-shadow: 5px 5px 0 var(--yellow); }
+  .htvc-page:hover .htvc-frame,
+  .htvc-page:focus-within .htvc-frame { transform: none; box-shadow: 5px 5px 0 var(--yellow); }
+}
+@media (min-width: 760px) { .htvc-pager { display: none; } }
+
+/* ---- What to do with it ---- */
+.htvc-actions {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem;
+  margin-top: clamp(1.2rem, 3vw, 1.6rem);
+}
+.htvc-btn { gap: 0.55rem; }
+.htvc-ico {
+  width: 1.2em; height: 1.2em; flex: none;
+  fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+.htvc-btn.btn--ghost { background: #fff; }
+.htvc-btn.btn--ghost:hover { background: var(--yellow-soft); }
+.htvc-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+/* Tablets: two even rows rather than three buttons and an orphan. */
+@media (min-width: 560px) and (max-width: 899px) {
+  .htvc-actions {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 34rem; margin-inline: auto;
+  }
+  .htvc-actions .htvc-btn { width: 100%; padding-inline: 0.9rem; }
+}
+/* Phones: the download across the top, Share and Save side by side, Print
+   across the bottom — every button a full thumb's width. */
+@media (max-width: 559px) {
+  .htvc-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+  .htvc-actions .htvc-btn { width: 100%; min-height: 48px; padding: 0.7rem 0.5rem; gap: 0.4rem; font-size: 0.92rem; }
+  .htvc-actions .btn--primary,
+  .htvc-actions [data-htvc-print] { grid-column: 1 / -1; }
+}
+
+.htvc-send {
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.25rem 1.1rem;
+  margin-top: 1rem; font-size: 0.98rem;
+}
+.htvc-send-label { font-weight: 700; color: var(--ink); }
+.htvc-send a,
+.htvc-copy {
+  display: inline-flex; align-items: center; min-height: 44px;
+  font: 700 0.98rem var(--font-body); color: var(--teal-deep);
+  text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1.5px;
+}
+.htvc-copy { padding: 0; border: 0; background: none; cursor: pointer; }
+.htvc-send a:hover, .htvc-copy:hover { color: var(--teal-ink); }
+.htvc-send a:focus-visible, .htvc-copy:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 3px; }
+/* Kept in the accessibility tree while empty, so the first message is announced. */
+.htvc-status { margin-top: 0.4rem; text-align: center; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.htvc-status:empty { margin: 0; }
+
+/* ---- Enlarged page (htv-card.js builds one <dialog> per page) ---- */
+.htvc-dialog {
+  width: min(94vw, 760px); max-width: none; max-height: 96dvh; padding: 0;
+  border: 2px solid var(--ink); border-radius: 12px; background: var(--paper); color: var(--ink);
+  box-shadow: 8px 8px 0 var(--yellow);
+  overflow: hidden;
+}
+.htvc-dialog::backdrop { background: rgb(28 43 41 / 78%); }
+.htvc-dialog-bar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 0.75rem;
+  padding: 0.55rem 0.7rem 0.55rem 1rem; border-bottom: 1.5px solid var(--line);
+}
+.htvc-dialog-title { font-family: var(--font-display); font-weight: 800; font-size: 1.05rem; line-height: 1.2; }
+.htvc-dialog-btns { display: flex; gap: 0.5rem; }
+.htvc-dialog-btn {
+  min-height: 44px; padding: 0.4rem 0.95rem; cursor: pointer;
+  font: 700 0.92rem var(--font-body); color: var(--ink);
+  background: #fff; border: 2px solid var(--ink); border-radius: 999px;
+}
+.htvc-dialog-btn--close { background: var(--yellow); box-shadow: 2px 2px 0 var(--ink); }
+.htvc-dialog-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.htvc-dialog-body { overflow: auto; max-height: calc(96dvh - 64px); background: var(--sand); padding: 0.75rem; }
+.htvc-dialog-img {
+  display: block; width: auto; max-width: 100%; height: auto;
+  max-height: calc(96dvh - 96px); margin: 0 auto;
+  border: 1.5px solid var(--ink); border-radius: 6px; background: #fff;
+}
+
+/* ---- Print: the card's two pages, one per sheet, nothing else ----
+   htv-card.js adds html.htvc-printing and a .htvc-printsheet (the two full
+   pictures) only for the Print button; printing the page any other way prints
+   the page as before, minus the card's buttons. */
+.htvc-printsheet { display: none; }
+@media print {
+  .htvc-actions, .htvc-send, .htvc-status, .htvc-pager, .htvc-zoom { display: none !important; }
+  .htvc-frame { box-shadow: none; transform: none; }
+  html.htvc-printing body > :not(.htvc-printsheet) { display: none !important; }
+  html.htvc-printing body { background: #fff; }
+  html.htvc-printing .htvc-printsheet { display: block !important; }
+  .htvc-printsheet img {
+    display: block; width: auto; height: auto; max-width: 100%;
+    max-height: min(96vh, 25cm); margin: 0 auto;
+    break-inside: avoid; break-after: page; page-break-after: always;
+  }
+  .htvc-printsheet img:last-child { break-after: auto; page-break-after: auto; }
+}
